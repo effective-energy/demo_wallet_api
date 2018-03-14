@@ -8,7 +8,7 @@ const bip39 = require('bip39');
 const _ = require('underscore');
 const randomstring = require('randomstring');
 
-const Alewallet = require('../models/Ale-wallet');
+const Alewallet = require('../models/Ale-wallets');
 const Aleusers = require('../models/Ale-users');
 
 router.post('/new', (req, res, next) => {
@@ -68,8 +68,8 @@ router.post('/new', (req, res, next) => {
 router.get('/', (req, res, next) => {
   Alewallet.find()
   .exec()
-  .then(docs => {
-    res.status(200).json(docs)
+  .then(result_found => {
+    res.status(200).json(result_found)
   })
   .catch(err => {
     res.status(500).json({

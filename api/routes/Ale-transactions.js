@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 
 const Aletransactions = require('../models/Ale-transactions');
-const Alewallet = require('../models/Ale-wallet');
+const Alewallet = require('../models/Ale-wallets');
 
 router.get('/:walletAddress', (req, res, next) => {
   Aletransactions.find()

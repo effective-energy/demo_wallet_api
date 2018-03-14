@@ -20,8 +20,8 @@ const Aleusers = require('../models/Ale-users');
 router.get('/', (req, res, next) => {
   Aleusers.find()
   .exec()
-  .then(result => {
-    res.status(200).json(data)
+  .then(result_found => {
+    res.status(200).json(result_found)
   })
   .catch(err => {
     res.status(500).json({

@@ -5,9 +5,10 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-const aleWalletRoutes = require('./api/routes/Ale-wallet');
+const aleWalletRoutes = require('./api/routes/Ale-wallets');
 const aleTransactionsRoutes = require('./api/routes/Ale-transactions');
 const aleUsersRoutes = require('./api/routes/Ale-users');
+const aleOffersRoutes = require('./api/routes/Ale-offers');
 
 mongoose.Promise = global.Promise;
 mongoose.connect(
@@ -33,6 +34,7 @@ app.use((req, res, next) => {
 app.use('/wallet', aleWalletRoutes);
 app.use('/transactions', aleTransactionsRoutes);
 app.use('/users', aleUsersRoutes);
+app.use('/offers', aleOffersRoutes);
 app.use(cors());
 
 app.use((req, res, next) => {
