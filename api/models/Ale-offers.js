@@ -10,13 +10,13 @@ const aleofferSchema = mongoose.Schema({
 		type: String,
 		required: true
 	},
-	requiments: {
+	requirements: {
 		type: Array,
 		required: false
 	},
 	timestamp: {
 		type: Number,
-		required: false
+		required: true
 	},
 	title: {
 		type: String,
@@ -24,7 +24,7 @@ const aleofferSchema = mongoose.Schema({
 	},
 	rating: {
 		type: Number,
-		required: true
+		required: false
 	},
 	description: {
 		type: String,
@@ -49,6 +49,10 @@ const aleofferSchema = mongoose.Schema({
 	is_completed: {
 		type: Boolean,
 		required: true
+	},
+	tests: {
+		type: Array,
+		required: false
 	},
 	__v: {
 		type: Number,

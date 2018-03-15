@@ -9,6 +9,7 @@ const aleWalletRoutes = require('./api/routes/Ale-wallets');
 const aleTransactionsRoutes = require('./api/routes/Ale-transactions');
 const aleUsersRoutes = require('./api/routes/Ale-users');
 const aleOffersRoutes = require('./api/routes/Ale-offers');
+const aleResumesRoutes = require('./api/routes/Ale-resumes')
 
 mongoose.Promise = global.Promise;
 mongoose.connect(
@@ -35,6 +36,8 @@ app.use('/wallet', aleWalletRoutes);
 app.use('/transactions', aleTransactionsRoutes);
 app.use('/users', aleUsersRoutes);
 app.use('/offers', aleOffersRoutes);
+app.use('/resumes', aleResumesRoutes);
+
 app.use(cors());
 
 app.use((req, res, next) => {
