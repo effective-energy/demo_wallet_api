@@ -159,7 +159,7 @@ router.post('/addressInfo', (req, res, next) => {
       error: err
     })
   });
-})
+});
 
 router.get('/seed', (req, res, next) => {
   return res.status(201).json({

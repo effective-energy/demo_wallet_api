@@ -92,9 +92,21 @@ router.post('/confirm-reg', (req, res, next) => {
   .exec()
   .then(result_found => {
     if(result_found.length !== 0) {
+      const token = jwt.sign({
+        email: result_found[0].email,
+        userId: result_found[0]._id
+      }, process.env.JWT_KEY, {
+        expiresIn: "30d"
+      });
+      res.status(201).json({
+        message: 'User created!',
+        user_token: result_found[0],
+        user_id: result._id
+      });
       return res.status(200).json({
         message: 'Email already exist!',
-        userModel: result_found
+        user_id: result_found,
+        user_token: token
       })
     }
     const newAleUser = new Aleusers({
@@ -119,9 +131,9 @@ router.post('/confirm-reg', (req, res, next) => {
       });
       res.status(201).json({
         message: 'User created!',
-        user_oken: token,
+        user_token: token,
         user_id: result._id
-      })
+      });
     })
     .catch(err => {
       res.status(500).json({
@@ -222,7 +234,7 @@ router.post('/new', (req, res, next) => {
           from: 'crowdsystems78@gmail.com',
           to: req.body.email,
           subject: 'Confirmation register',
-          text: `To complete the registration, click the link - http://localhost:8081/#/registration/confirmationuser?token=${confirmLink}. The link is valid for 30 days.`
+          text: `To complete the registration, click the link - http://localhost:8081/#/registration/confirmationuser/${confirmLink}. The link is valid for 30 days.`
         };
 
         transporter.sendMail(mailOptions, function(error, info) {
