@@ -1,2 +1,2 @@
-# demo_wallet_api
+# Demo-wallet API
 Backend for demo wallet alehub
