@@ -8,15 +8,54 @@ const speakeasy = require('speakeasy');
 const randomstring = require('randomstring');
 
 var transporter = nodemailer.createTransport({
-  host: '',
-  port: ,
+  host: 'smtp.gmail.com',
+  port: 25,
   auth: {
-    user: '',
-    pass: ''
+    user: 'crowdsystems78@gmail.com',
+    pass: '12345678ALE'
   }
 });
 
 const Aleusers = require('../models/Ale-users');
+const Aletoken = require('../models/Ale-token');
+
+router.post('/check-login', (req, res, next) => {
+  if(req.body.token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  let decode_user_token = jwt.verify(req.body.token, process.env.JWT_KEY);
+  Aletoken.find({user_token: req.body.token})
+  .exec()
+  .then(result_found => {
+    if(result_found.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
+      })
+    }
+    Aleusers.find({_id: decode_user_token.userId})
+    .exec()
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      return res.status(200).json(result_found_user);
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: err
+      })
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({
+      error: err
+    })
+  })
+});
 
 router.get('/', (req, res, next) => {
   Aleusers.find()
@@ -363,7 +402,7 @@ router.post('/restore-password', (req, res, next) => {
       .then(result_reset_password => {
 
         const mailOptions = {
-          from: '',
+          from: 'crowdsystems78@gmail.com',
           to: req.body.email,
           subject: 'Restore password',
           text: `New password - ${newPassword}`
@@ -476,7 +515,7 @@ router.post('/new', (req, res, next) => {
         });
 
         const mailOptions = {
-          from: '',
+          from: 'crowdsystems78@gmail.com',
           to: req.body.email,
           subject: 'Confirmation register',
           text: `To complete the registration, click the link - http://localhost:8081/#/registration/confirmationuser/${confirmLink}. The link is valid for 30 days.`
@@ -617,19 +656,35 @@ router.post('/login', (req, res, next) => {
         if (result) {
           const token = jwt.sign({
             email: result_found[0].email,
-            userId: result_found[0]._id
+            userId: result_found[0]._id,
+            randomData: randomstring.generate(16)
           }, process.env.JWT_KEY, {
             expiresIn: "30d"
           });
-          return res.status(200).json({
-            message: 'Auth success',
-            user_token: token,
-            user_id: result_found[0]._id
+
+          const newUserToken = new Aletoken({
+            _id: new mongoose.Types.ObjectId(),
+            user_token: token
+          });
+          newUserToken
+          .save()
+          .then(result_save_token => {
+            return res.status(200).json({
+              message: 'Auth success',
+              user_token: token,
+              user_id: result_found[0]._id
+            });
+          })
+          .catch(err => {
+            return res.status(500).json({
+              error: err
+            })
+          })
+        } else {
+          return res.status(401).json({
+            message: 'Auth failed'
           });
         }
-        return res.status(401).json({
-          message: 'Auth failed'
-        });
       })
     }
   })
