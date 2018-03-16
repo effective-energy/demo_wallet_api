@@ -1,0 +1,178 @@
+{
+	"swagger": "2.0",
+	"info": {
+		"description": "Swagger API",
+		"version": "1.0.0",
+		"title": "Alehub demo wallet API"
+	},
+	"host": "", //Server host
+	"basePath": "",
+	"schemes": ["http"],
+	"paths": {
+		"/users/": {
+			"get": {
+				"tags": ["users"],
+				"summary": "Get all users",
+				"description": "Returns a users list",
+				"operationId": "getUsers",
+				"produces": ["application/json"],
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description":"Success",
+						"schema": {
+							"type": "object"
+						}
+					}
+				},
+				"security": [{
+					"api_key": []
+				}]
+			}
+		},
+		"/wallets/": {
+			"get": {
+				"tags": ["wallets"],
+				"summary": "Get all users wallets",
+				"description": "Returns all users wallets",
+				"operationId": "getWallets",
+				"produces": ["application/json"],
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"schema": {
+							"type": "object"
+						}
+					}
+				},
+				"security": [{
+					"api_key":[]
+				}]
+			}
+		},
+		"/transactions/": {
+			"get": {
+				"tags": ["transactions"],
+				"summary": "Get all users transactions",
+				"description": "Returns all users transactions",
+				"operationId": "getTransactions",
+				"produces": ["application/json"],
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"schema": {
+							"type": "object"
+						}
+					}
+				},
+				"security": [{
+					"api_key": []
+				}]
+			}
+		},
+		"/resumes/": {
+			"get": {
+				"tags": ["resumes"],
+				"summary": "Get all users resumes",
+				"description": "Returns all users resumes",
+				"operationId": "getResumes",
+				"produces": ["application/json"],
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"schema": {
+							"type": "object"
+						}
+					}
+				},
+				"security": [{
+					"api_key":[]
+				}]
+			}
+		},
+		"/offers/": {
+			"get": {
+				"tags": ["offers"],
+				"summary": "Get all offers",
+				"description": "Returns all offers",
+				"operationId": "getOffers",
+				"produces": ["application/json"],
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": "Success",
+						"schema": {
+							"type": "object"
+						}
+					}
+				},
+				"security": [{
+					"api_key": []
+				}]
+			}
+		},
+		"/offers/{offerId}": {
+			"get": {
+				"tags": ["offers"],
+				"summary": "Find offer by id",
+				"description": "Returns a single offer",
+				"operationId": "getOfferById",
+				"produces": ["application\/json"],
+				"parameters": [{
+					"name": "offerId",
+					"in": "path",
+					"description": "Id of offer to return",
+					"required": true,
+					"type": "integer",
+					"format": "int64"
+				}],
+				"responses": {
+					"200": {
+						"description": "successful operation",
+						"schema": {
+							"$ref": "#\/definitions\/Offers"
+						}
+					},
+					"400": {
+						"description": "Invalid ID supplied"
+					},
+					"404": {
+						"description": "Offer not found"
+					}
+				},
+				"security": [{
+					"api_key": []
+				}]
+			}
+		}
+	},
+  "definitions": {
+    "Offers": {
+      "type": "object",
+      "properties": {
+        "offerId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ApiResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

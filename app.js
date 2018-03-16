@@ -9,7 +9,10 @@ const aleWalletRoutes = require('./api/routes/Ale-wallets');
 const aleTransactionsRoutes = require('./api/routes/Ale-transactions');
 const aleUsersRoutes = require('./api/routes/Ale-users');
 const aleOffersRoutes = require('./api/routes/Ale-offers');
-const aleResumesRoutes = require('./api/routes/Ale-resumes')
+const aleResumesRoutes = require('./api/routes/Ale-resumes');
+
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
 
 mongoose.Promise = global.Promise;
 mongoose.connect(
@@ -37,6 +40,8 @@ app.use('/transactions', aleTransactionsRoutes);
 app.use('/users', aleUsersRoutes);
 app.use('/offers', aleOffersRoutes);
 app.use('/resumes', aleResumesRoutes);
+
+app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors());
 

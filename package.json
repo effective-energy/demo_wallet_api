@@ -33,6 +33,7 @@
     "sha256": "^0.2.0",
     "socket.io": "^2.0.4",
     "speakeasy": "^2.0.0",
+    "swagger-ui-express": "^2.0.15",
     "tweetnacl-util": "^0.15.0",
     "underscore": "^1.8.3"
   },
