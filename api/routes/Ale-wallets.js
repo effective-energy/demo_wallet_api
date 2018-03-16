@@ -5,7 +5,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const sha256 = require('sha256');
 const bip39 = require('bip39');
-const _ = require('underscore');
 const randomstring = require('randomstring');
 
 const Alewallet = require('../models/Ale-wallets');
@@ -132,26 +131,14 @@ router.post('/rename', (req, res, next) => {
 router.post('/addressInfo', (req, res, next) => {
   Alewallet.find()
   .exec()
-  .then(data => {
-    let x = [];
-    for(let i=0;i<data.length;i++) {
-      x.push(data[i].address)
-    }
-    let g = _.intersection(x, req.body.addresses)
-    if(g.length !== 0) {
-      let k = [];
-      for(let i=0;i<data.length;i++) {
-        for(let j=0;j<g.length;j++) {
-          if(data[i].address === g[j]) k.push(data[i])
-        }
-      }
-      return res.status(201).json({
-        foundedAddresses: k
+  .then(result_found => {
+    let foundedWallet = result_found.filter(wallet => req.body.addresses.includes(wallet.address));
+    if(foundedWallet.length === 0) {
+      return res.status(404).json({
+        message: 'Wallets not found'
       })
     } else {
-      return res.status(404).json({
-        message: "wallets not found"
-      })
+      return res.status(200).json(foundedWallet);
     }
   })
   .catch(err => {
