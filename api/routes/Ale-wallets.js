@@ -9,59 +9,81 @@ const randomstring = require('randomstring');
 
 const Alewallet = require('../models/Ale-wallets');
 const Aleusers = require('../models/Ale-users');
+const Aletoken = require('../models/Ale-token');
 
 router.post('/new', (req, res, next) => {
-  let seed = req.body.seed.join().replace(/,/g , " ");
-  if(bip39.validateMnemonic(seed)) {
-    const newAleWallet = new Alewallet({
-      _id: new mongoose.Types.ObjectId(),
-      name: req.body.name,
-      balance: 100,
-      seed: sha256(req.body.seed.join().replace(/,/g , " ")),
-      address: randomstring.generate(47)
-    });
-    newAleWallet.save()
-    .then(result => {
-      Aleusers.find({_id: req.body.userId}).find()
-      .exec()
-      .then(result_user_found => {
-        if(result_user_found.length === 0) {
-          return res.status(404).json({
-            message: "User not found"
-          })
-        }
-        Aleusers.update({ _id: req.body.userId }, {
-          $push: { walletsList: newAleWallet.address }
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
+  .exec()
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
+      })
+    }
+    Aleusers.find({_id: decode_token._id})
+    .exec()
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
         })
-        .exec()
-        .then(result_create_new_wallet => {
-          return res.status(201).json({
-            message: 'New wallet success create!',
-            walletModel: newAleWallet
+      }
+      let seed = req.body.seed.join().replace(/,/g , " ");
+      if(bip39.validateMnemonic(seed)) {
+        const newAleWallet = new Alewallet({
+          _id: new mongoose.Types.ObjectId(),
+          name: req.body.name,
+          balance: 100,
+          seed: sha256(req.body.seed.join().replace(/,/g , " ")),
+          address: randomstring.generate(47)
+        });
+        newAleWallet.save()
+        .then(result => {
+          Aleusers.update({ _id: req.body.userId }, {
+            $push: { walletsList: newAleWallet.address }
+          })
+          .exec()
+          .then(result_create_new_wallet => {
+            return res.status(201).json({
+              message: 'New wallet success create!',
+              walletModel: newAleWallet
+            })
+          })
+          .catch(error => {
+            return res.status(500).json({
+              error: err
+            })
           })
         })
-        .catch(error => {
+        .catch(err => {
           return res.status(500).json({
             error: err
           })
         })
-      })
-      .catch(err => {
+      } else {
         return res.status(500).json({
-          error: err
+          message: 'Incorrect mnemonic!'
         })
-      })
+      }
     })
     .catch(err => {
       return res.status(500).json({
         error: err
       })
     })
-  } else {
+  })
+  .catch(err => {
     return res.status(500).json({
-      message: 'Incorrect mnemonic!'
+      error: err
     })
-  }
+  })
 });
 
 router.get('/', (req, res, next) => {
@@ -78,15 +100,22 @@ router.get('/', (req, res, next) => {
 });
 
 router.post('/rename', (req, res, next) => {
-  Alewallet.find({address: req.body.walletAddress})
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
   .exec()
-  .then(result_found_wallet => {
-    if(result_found_wallet.length === 0) {
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
       return res.status(404).json({
-        message: 'Wallet not found'
+        message: 'Token not found'
       })
     }
-    Aleusers.find({_id: req.body.userId})
+    Aleusers.find({_id: decode_token._id})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -94,26 +123,40 @@ router.post('/rename', (req, res, next) => {
           message: 'User not found'
         })
       }
-      if(result_found_user[0].walletsList.indexOf(req.body.walletAddress) === -1) {
-        return res.status(404).json({
-          message: 'The user does not have such a wallet'
-        })
-      } else {
-        Alewallet.update({address: req.body.newWalletName}, {
-          name: req.body.walletName
-        })
-        .exec()
-        .then(result_rename_wallet => {
-          return res.status(200).json({
-            message: 'Wallet name changed'
+      Alewallet.find({address: req.body.walletAddress})
+      .exec()
+      .then(result_found_wallet => {
+        if(result_found_wallet.length === 0) {
+          return res.status(404).json({
+            message: 'Wallet not found'
           })
-        })
-        .catch(err => {
-          return res.status(505).json({
-            error: err
+        }
+        if(result_found_user[0].walletsList.indexOf(req.body.walletAddress) === -1) {
+          return res.status(404).json({
+            message: 'The user does not have such a wallet'
           })
+        } else {
+          Alewallet.update({address: req.body.newWalletName}, {
+            name: req.body.walletName
+          })
+          .exec()
+          .then(result_rename_wallet => {
+            return res.status(200).json({
+              message: 'Wallet name changed'
+            })
+          })
+          .catch(err => {
+            return res.status(505).json({
+              error: err
+            })
+          })
+        }
+      })
+      .catch(err => {
+        return res.status(500).json({
+          error: err
         })
-      }
+      })
     })
     .catch(err => {
       return res.status(500).json({
@@ -129,23 +172,54 @@ router.post('/rename', (req, res, next) => {
 });
 
 router.post('/addressInfo', (req, res, next) => {
-  Alewallet.find()
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
   .exec()
-  .then(result_found => {
-    let foundedWallet = result_found.filter(wallet => req.body.addresses.includes(wallet.address));
-    if(foundedWallet.length === 0) {
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
       return res.status(404).json({
-        message: 'Wallets not found'
+        message: 'Token not found'
       })
-    } else {
-      return res.status(200).json(foundedWallet);
     }
+    Aleusers.find({_id: decode_token._id})
+    .exec()
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      Alewallet.find()
+      .exec()
+      .then(result_found => {
+        let foundedWallet = result_found.filter(wallet => req.body.addresses.includes(wallet.address));
+        return res.status(200).json({
+          foundedAddresses: foundedWallet
+        });
+      })
+      .catch(err => {
+        res.status(500).json({
+          error: err
+        })
+      });
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: err
+      })
+    })
   })
   .catch(err => {
-    res.status(500).json({
+    return res.status(500).json({
       error: err
     })
-  });
+  })
 });
 
 router.get('/seed', (req, res, next) => {
@@ -168,18 +242,52 @@ router.delete('/delete/:id', (req, res, next) => {
 });
 
 router.post('/redeem', (req, res, next) => {
-  let seed = req.body.seed.join().replace(/,/g , " ");
-	if(bip39.validateMnemonic(seed)) {
-    Alewallet.find({ seed: sha256(seed) })
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
+  .exec()
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
+      })
+    }
+    Aleusers.find({_id: decode_token._id})
     .exec()
-    .then(result => {
-      if(result.length !== 0) {
-        return res.status(201).json({
-          walletInfo: result[0]
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      let seed = req.body.seed.join().replace(/,/g , " ");
+      if(bip39.validateMnemonic(seed)) {
+        Alewallet.find({ seed: sha256(seed) })
+        .exec()
+        .then(result => {
+          if(result.length !== 0) {
+            return res.status(201).json({
+              walletInfo: result[0]
+            })
+          } else {
+            return res.status(404).json({
+              message: 'Wallet not found'
+            })
+          }
+        })
+        .catch(err => {
+          return res.status(500).json({
+            error: err
+          })
         })
       } else {
-        return res.status(404).json({
-          message: 'Wallet not found'
+        return res.status(500).json({
+          message: 'Incorrect mnemonic!'
         })
       }
     })
@@ -188,11 +296,12 @@ router.post('/redeem', (req, res, next) => {
         error: err
       })
     })
-  } else {
+  })
+  .catch(err => {
     return res.status(500).json({
-      message: 'Incorrect mnemonic!'
+      error: err
     })
-  }
+  })
 });
 
 module.exports = router;

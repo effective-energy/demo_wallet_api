@@ -35,6 +35,10 @@ const aleUsersSchema = mongoose.Schema({
 		type: Array,
 		required: false
 	},
+	change_token: {
+		type: String,
+		required: false,
+	},
 	__v: {
 		type: Number,
 		select: false

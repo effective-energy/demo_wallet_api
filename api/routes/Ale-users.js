@@ -19,8 +19,58 @@ var transporter = nodemailer.createTransport({
 const Aleusers = require('../models/Ale-users');
 const Aletoken = require('../models/Ale-token');
 
+router.delete('/logout', (req, res, next) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
+  .exec()
+  .then(result_found => {
+    if (result_found.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
+      })
+    }
+    Aleusers.find({_id: decode_token.user_id})
+    .exec()
+    .then(result_found_user => {
+      if (result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      Aletoken.delete({user_token: req.body.token})
+      .exec()
+      .then(result_delete_token => {
+        return res.status(200).json({
+          message: 'Token success deleted'
+        })
+      })
+      .catch(err => {
+        return res.status(500).json({
+          error: err
+        })
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: err
+      })
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({
+      error: err
+    })
+  })
+});
+
 router.post('/check-login', (req, res, next) => {
-  if(req.body.token.length === 0) {
+  if (req.body.token.length === 0) {
     return res.status(404).json({
       message: 'User token not sent'
     })
@@ -29,7 +79,7 @@ router.post('/check-login', (req, res, next) => {
   Aletoken.find({user_token: req.body.token})
   .exec()
   .then(result_found => {
-    if(result_found.length === 0) {
+    if (result_found.length === 0) {
       return res.status(404).json({
         message: 'Token not found'
       })
@@ -37,7 +87,7 @@ router.post('/check-login', (req, res, next) => {
     Aleusers.find({_id: decode_user_token.userId})
     .exec()
     .then(result_found_user => {
-      if(result_found_user.length === 0) {
+      if (result_found_user.length === 0) {
         return res.status(404).json({
           message: 'User not found'
         })
@@ -71,23 +121,29 @@ router.get('/', (req, res, next) => {
 });
 
 router.post('/setRating', (req, res, next) => {
-  let userToken = req.headers.authorization;
-  let decodeToken = jwt.verify(userToken, process.env.JWT_KEY);
-  if(decodeToken.userId !== req.body.userId) {
-    return res.status(401).json({
-      error: 'Wrong token!'
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
     })
   }
-  Aleusers.find({email: decodeToken.email})
+  Aleusers.find({_id: decode_token.user_id})
   .exec()
   .then(result_found => {
-    if(result_found.length === 0) {
+    if (result_found.length === 0) {
       return res.status(404).json({
         message: 'User not found by token'
       })
     }
-    let newRatingUser = result_found[0].rating + req.body.rating;
-    Aleusers.update({ type: req.params.typeId }, { rating: newRatingUser })
+
+    let newRatingUser = Number(result_found[0].rating + req.body.rating);
+    if(!isNaN(newRatingUser)) newRatingUser = result_found[0].rating;
+
+    Aleusers.update(
+      { type: req.params.typeId },
+      { rating: newRatingUser }
+    )
     .exec()
     .then(result_set_rating => {
       return res.status(200).json({
@@ -108,57 +164,54 @@ router.post('/setRating', (req, res, next) => {
   })
 });
 
-router.post('/changeEmail', (req, res, next) => {
-  Aleusers.find({_id: req.body.userId})
+router.post('/enable-two-auth', (req, res, next) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
   .exec()
-  .then(result_found => {
-    if(result_found.length === 0) {
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
       return res.status(404).json({
-        message: 'User not found'
+        message: 'Token not found'
       })
     }
-    if(result_found[0].email === req.body.email) {
-      return res.status(404).json({
-        message: 'User exist'
-      })
-    }
-    let user_token = req.headers.authorization;
-    if(user_token.length === 0) {
-      return res.status(500).json({
-        error: 'Enter 2fa code'
-      })
-    }
-    let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
-    if(decode_token.userId !== req.body.userId) {
-      return res.status(401).json({
-        error: 'Wrong token!'
-      })
-    }
-
-    User.update(
-      { _id: result_found[0]._id },
-      { changeToken: randomstring }
-    )
+    Aleusers.find({_id: decode_token._id})
     .exec()
-    .then(result_change_email => {
-
-      const mailOptions = {
-        from: 'restore@alehub.io',
-        to: result_found[0].email,
-        subject: 'Change password',
-        text: `Secret key - ${randomstring}`
-      };
-
-      transporter2.sendMail(mailOptions, function(error, info) {
-        if(error) {
-          return res.status(500).json({
-            error: error
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      if (
+        speakeasy.time.verify({
+          secret: req.body.secret,
+          encoding: 'base32',
+          token: req.body.token
+        })
+      ) {
+        Aleusers.update({ _id: req.params.teamId }, { twoauth: req.body.secret, isTwoAuth: true })
+        .exec()
+        .then(result_update => {
+          res.status(200).json({
+            message: 'User model success updated'
           })
-        }
-        return res.status(201).json({
-          message: 'Secret key send to mail'
+        })
+        .catch(err => {
+          res.status(500).json({
+            error: err
+          })
         });
-      });
+      } else {
+        res.status(500).json({
+          message: 'Failed to verify'
+        })
+      }
     })
     .catch(err => {
       return res.status(500).json({
@@ -173,42 +226,48 @@ router.post('/changeEmail', (req, res, next) => {
   })
 });
 
-router.post('/checkCode', (req, res, next) => {
-  Aleusers.find({email: req.body.email})
-  .exec()
-  .then(result_found => {
-    if(result_found.length === 0) {
-      return res.status(404).json({
-        message: 'User not found'
-      })
-    }
-    if(result_found[0].changeToken !== req.body.secretKey) {
-      return res.status(401).json({
-        message: 'incorrect secret key'
-      })
-    }
-    let userToken = req.headers.authorization;
-    if(userToken.length === 0) {
-      return res.status(500).json({
-        error: 'Enter user token!'
-      })
-    }
-    let decodeToken = jwt.verify(userToken, process.env.JWT_KEY);
-    if(decodeToken.userId !== req.body.userId) {
-      return res.status(401).json({
-        error: 'Wrong token!'
-      })
-    }
-    Aleusers.update({
-      _id: result_found[0]._id
-    }, {
-      email: req.body.newEmail
+router.post('/disable-two-auth', (req, res, next) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
     })
-    .exec()
-    .then(result_new_email => {
-      res.status(201).json({
-        message: 'Email success update!'
+  }
+  Aletoken.find({user_token: user_token})
+  .exec()
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
       })
+    }
+    Aleusers.find({_id: decode_token._id})
+    .exec()
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      if(!result_found_user[0].isTwoAuth) {
+        return res.status(500).json({
+          message: 'Two auth already disabled'
+        })
+      } else {
+        Aleusers.update({ _id: req.params.teamId }, { isTwoAuth: false })
+        .exec()
+        .then(result_enable_twoauth => {
+          return res.status(200).json({
+            message: 'Two auth success enable'
+          })
+        })
+        .catch(err => {
+          return res.status(500).json({
+            error: err
+          })
+        })
+      }
     })
     .catch(err => {
       return res.status(500).json({
@@ -221,37 +280,50 @@ router.post('/checkCode', (req, res, next) => {
       error: err
     })
   })
+});
+
+router.post('/changeEmail', (req, res, next) => {
+  
 });
 
 router.post('/changePassword', (req, res, next) => {
-  Aleusers.find({email: req.body.email})
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aleusers.find({_id: decode_token.user_id})
   .exec()
   .then(result_found => {
-    if(result_found.length < 1) {
-      return res.status(401).json({
+    if (result_found.length === 0) {
+      return res.status(404).json({
         message: 'User not found!'
       })
     }
-    if(req.body.new !== req.body.repeat) {
-      return res.status(401).json({
+
+    if (req.body.new !== req.body.repeat) {
+      return res.status(200).json({
         message: 'Passwords do not match'
       })
     }
 
-    if(bcrypt.compareSync(req.body.old, result_found[0].password)) {
+    if (bcrypt.compareSync(req.body.old, result_found[0].password)) {
       bcrypt.hash(req.body.new, 10, (err, hash) => {
-        if(err) {
+        if (err) {
           return res.status(500).json({
             error: err
           });
         }
+
         Aleusers.update(
           { _id: result_found[0]._id },
           { password: hash }
         )
         .exec()
         .then(result_change_password => {
-          return res.status(201).json({
+          return res.status(200).json({
             message: 'Password update!'
           })  
         })
@@ -275,8 +347,15 @@ router.post('/changePassword', (req, res, next) => {
   });
 });
 
-router.post('changeBasicInfo', (req, res, next) => {
-  Aleusers.find({email: req.body.email})
+router.post('change-basic-info', (req, res, next) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aleusers.find({_id: decode_token.user_id})
   .exec(result_found => {
     if(result_found.length === 0) {
       return res.status(404).json({
@@ -309,47 +388,50 @@ router.post('changeBasicInfo', (req, res, next) => {
 });
 
 router.post('/confirm-reg', (req, res, next) => {
-  let confirmToken = jwt.verify(req.body.token, process.env.JWT_KEY);
-  if(confirmToken.email === undefined || confirmToken.name === undefined || confirmToken.password === undefined) {
+  let confirm_token = jwt.verify(req.body.token, process.env.JWT_KEY);
+  if (confirm_token.email === undefined || confirm_token.name === undefined || confirm_token.password === undefined) {
     return res.status(500).json({
       message: 'Invalid token'
     })
   }
-
-  Aleusers.find({email: confirmToken.email})
+  Aleusers.find({email: confirm_token.email})
   .exec()
   .then(result_found => {
-    if(result_found.length !== 0) {
+    if (result_found.length !== 0) {
       const token = jwt.sign({
         email: result_found[0].email,
         userId: result_found[0]._id
       }, process.env.JWT_KEY, {
         expiresIn: "30d"
       });
-      res.status(201).json({
+
+      res.status(200).json({
         message: 'User created!',
         user_token: result_found[0],
         user_id: result._id
       });
+
       return res.status(200).json({
         message: 'Email already exist!',
         user_id: result_found,
         user_token: token
       })
     }
+
     const newAleUser = new Aleusers({
       _id: new mongoose.Types.ObjectId(),
-      name: confirmToken.name,
-      email: confirmToken.email,
-      password: confirmToken.password,
+      name: confirm_token.name,
+      email: confirm_token.email,
+      password: confirm_token.password,
       isTwoAuth: false,
       twoAuthRecovery: "",
       walletsList: [],
       rating: -1,
-      competence: []
+      competence: [],
+      change_token: ""
     });
-    newAleUser
-    .save()
+
+    newAleUser.save()
     .then(result => {
       const token = jwt.sign({
         email: result.email,
@@ -357,11 +439,13 @@ router.post('/confirm-reg', (req, res, next) => {
       }, process.env.JWT_KEY, {
         expiresIn: "30d"
       });
-      res.status(201).json({
+
+      res.status(200).json({
         message: 'User created!',
         user_token: token,
         user_id: result._id
       });
+
     })
     .catch(err => {
       res.status(500).json({
@@ -377,26 +461,31 @@ router.post('/confirm-reg', (req, res, next) => {
 });
 
 router.post('/restore-password', (req, res, next) => {
-  Aleusers.find({email: req.body.email}).find()
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aleusers.find({_id: decode_token.user_id}).find()
   .exec()
   .then(result_found => {
-    if(result_found.length === 0) {
+    if (result_found.length === 0) {
       return res.status(404).json({
         message: "User not found by email"
       })
     }
-
     let newPassword = randomstring.generate(16);
-
     bcrypt.hash(newPassword, 10, (err, hash) => {
-      if(err) {
+      if (err) {
         return res.status(500).json({
           error: err
         });
       }
       Aleusers.update(
         {_id: result_found[0]._id},
-        {password: hash}
+        { password: hash }
       )
       .exec()
       .then(result_reset_password => {
@@ -409,12 +498,12 @@ router.post('/restore-password', (req, res, next) => {
         };
 
         transporter.sendMail(mailOptions, function(error, info) {
-          if(error) {
+          if (error) {
             return res.status(500).json({
               error: error
             })
           }
-          return res.status(201).json({
+          return res.status(200).json({
             message: 'New password send to E-mail'
           });
         });
@@ -437,7 +526,7 @@ router.post('/restore-2fa', (req, res, next) => {
   Aleusers.find({email: req.body.email})
   .exec()
   .then(result_found => {
-    if(result_found.length === 0) {
+    if (result_found.length === 0) {
       return res.status(404).json({
         message: 'User not found'
       })
@@ -451,17 +540,17 @@ router.post('/restore-2fa', (req, res, next) => {
       if (result) {
         if(result_found[0].twoauth === req.body.secret) {
           let secret = speakeasy.generateSecret({length: 20});
-          res.status(201).json({ 
+          res.status(200).json({ 
             secret: secret.base32,
             qrPath: encodeURIComponent(secret.otpauth_url)
           });
-          return User.update(
+          return Aleusers.update(
             { _id: result_found[0]._id },
             { twoauth: secret.base32 }
           )
           .exec()
           .then(result => {
-            return res.status(201).json({ 
+            return res.status(200).json({ 
               secret: secret.base32,
               qrPath: encodeURIComponent(secret.otpauth_url)
             });
@@ -493,14 +582,14 @@ router.post('/new', (req, res, next) => {
   Aleusers.find({email: req.body.email})
   .exec()
   .then(result_found => {
-    if(result_found.length !== 0) {
+    if (result_found.length !== 0) {
       return res.status(200).json({
         message: 'User already exist!'
       })
     }
 
     bcrypt.hash(req.body.password, 10, (err, hash) => {
-      if(err) {
+      if (err) {
         return res.status(500).json({
           error: err
         });
@@ -522,12 +611,12 @@ router.post('/new', (req, res, next) => {
         };
 
         transporter.sendMail(mailOptions, function(error, info) {
-          if(error) {
+          if (error) {
             return res.status(500).json({
               error: error
             })
           }
-          return res.status(201).json({
+          return res.status(200).json({
             message: 'The registration confirmation link has been sent to your e-mail'
           });
         });
@@ -545,7 +634,7 @@ router.post('/login/2fa', (req, res, next) => {
   Aleusers.find({mail: req.body.email})
   .exec()
   .then(result_found => {
-    if(result_login.length == 0) {
+    if (result_login.length == 0) {
       return res.status(401).json({
         message: 'User not found'
       });
@@ -562,22 +651,42 @@ router.post('/login/2fa', (req, res, next) => {
           encoding: 'base32',
           token: req.body.token
         })) {
-        const token = jwt.sign({
-          email: result_found[0].email,
-          userId: result_found[0]._id
-        }, process.env.JWT_KEY, {
-          expiresIn: "30d"
-        });
-        return res.status(200).json({
-          message: 'Auth success',
-          jwt_token: token,
-          userId: result_found[0]._id
-        });
+          const token = jwt.sign({
+            email: result_found[0].email,
+            userId: result_found[0]._id,
+            randomData: randomstring.generate(16)
+          }, process.env.JWT_KEY, {
+            expiresIn: "30d"
+          });
+
+          const newUserToken = new Aletoken({
+            _id: new mongoose.Types.ObjectId(),
+            user_token: token
+          });
+
+          newUserToken.save()
+          .then(result_save_token => {
+            return res.status(200).json({
+              message: 'Auth success',
+              user_token: token,
+              twoauth_status: result_found[0].isTwoAuth
+            });
+          })
+          .catch(err => {
+            return res.status(500).json({
+              error: err
+            })
+          })
+        } else {
+          return res.status(401).json({
+            message: 'Auth failed'
+          });
         }
+      } else {
+        return res.status(401).json({
+          message: 'Auth failed'
+        });
       }
-      return res.status(401).json({
-        message: 'Auth failed'
-      });
     })
   })
   .catch(err => {
@@ -587,43 +696,81 @@ router.post('/login/2fa', (req, res, next) => {
   })
 });
 
-router.post('/login/confirm', (req, res, next) => {
-  Aleusers.find({email: req.body.email})
+// router.post('/login/confirm', (req, res, next) => {
+//   Aleusers.find({email: req.body.email})
+//   .exec()
+//   .then(result_found => {
+//     if(result_found.length === 0) {
+//       return res.status(404).json({
+//         message: 'User not found'
+//       })
+//     }
+//     bcrypt.compare(req.body.password, result_found[0].password, (err, result) => {
+//       if (err) {
+//         return res.status(401).json({
+//           message: 'Auth failed'
+//         });
+//       }
+//       if (result) {
+//         const token = jwt.sign({
+//           email: result_found[0].email,
+//           userId: result_found[0]._id,
+//           randomData: randomstring.generate(16)
+//         }, process.env.JWT_KEY, {
+//           expiresIn: "30d"
+//         });
+
+//         const newUserToken = new Aletoken({
+//           _id: new mongoose.Types.ObjectId(),
+//           user_token: token
+//         });
+//         newUserToken
+//         .save()
+//         .then(result_save_token => {
+//           return res.status(200).json({
+//             message: 'Auth success',
+//             user_token: token
+//           });
+//         })
+//         .catch(err => {
+//           return res.status(500).json({
+//             error: err
+//           })
+//         })
+//       } else {
+//         return res.status(401).json({
+//           message: 'Auth failed'
+//         });
+//       }
+//     })
+//   })
+//   .catch(err => {
+//     return res.status(500).json({
+//       error: err
+//     })
+//   })
+// });
+
+router.get('/get-user-data', (req, res, next) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aleusers.find({_id: decode_token.user_id})
   .exec()
   .then(result_found => {
-    if(result_found.length === 0) {
+    if (result_found.length === 0) {
       return res.status(404).json({
-        message: 'User not found'
+        message: 'User is not found'
       })
     }
-    bcrypt.compare(req.body.password, result_found[0].password, (err, result) => {
-      if (err) {
-        return res.status(401).json({
-          message: 'Auth failed'
-        });
-      }
-      if (result) {
-        if (speakeasy.time.verify({
-          secret: result_found[0].twoauth,
-          encoding: 'base32',
-          token: req.body.token
-        })) {
-        const token = jwt.sign({
-          email: result_found[0].email,
-          userId: result_found[0]._id
-        }, process.env.JWT_KEY, {
-          expiresIn: "30d"
-        });
-        return res.status(200).json({
-          message: 'Authorization was successful.',
-          user_token: token,
-          user_id: result_found[0]._id
-        });
-        }
-      }
-      return res.status(401).json({
-        message: 'Auth failed'
-      });
+    return res.status(200).json({
+      message: 'User is found',
+      name: result_found[0].name,
+      email: result_found[0].email
     })
   })
   .catch(err => {
@@ -637,12 +784,12 @@ router.post('/login', (req, res, next) => {
   Aleusers.find({email: req.body.email})
   .exec()
   .then(result_found => {
-    if(result_found.length === 0) {
+    if (result_found.length === 0) {
       return res.status(404).json({
         message: 'User not found!'
       })
     }
-    if(result_found[0].isTwoAuth) {
+    if (result_found[0].isTwoAuth) {
       return res.status(200).json({
         message: 'Authorization was successful. Enter the two-factor code.'
       })
@@ -656,7 +803,7 @@ router.post('/login', (req, res, next) => {
         if (result) {
           const token = jwt.sign({
             email: result_found[0].email,
-            userId: result_found[0]._id,
+            user_id: result_found[0]._id,
             randomData: randomstring.generate(16)
           }, process.env.JWT_KEY, {
             expiresIn: "30d"
@@ -672,7 +819,7 @@ router.post('/login', (req, res, next) => {
             return res.status(200).json({
               message: 'Auth success',
               user_token: token,
-              user_id: result_found[0]._id
+              twoauth_status: result_found[0].isTwoAuth
             });
           })
           .catch(err => {
