@@ -21,6 +21,7 @@
     "cors": "^2.8.4",
     "ed2curve": "^0.2.1",
     "express": "^4.16.2",
+    "express-rate-limit": "^2.11.0",
     "express-socket.io-router": "^1.0.5",
     "jsonwebtoken": "^8.1.0",
     "mngen": "^1.1.0",

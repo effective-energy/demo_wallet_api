@@ -14,6 +14,16 @@ const aleResumesRoutes = require('./api/routes/Ale-resumes');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
 
+const RateLimit = require('express-rate-limit');
+app.enable('trust proxy');
+var limiter = new RateLimit({
+  windowMs: 600000,
+  max: 1000,
+  delayMs: 0,
+  message: "Too many accounts created from this IP, please try again after an 3 minute"
+});
+app.use(limiter);
+
 mongoose.Promise = global.Promise;
 mongoose.connect(
 	'mongodb://admin:'+

@@ -164,6 +164,14 @@ router.post('/setRating', (req, res, next) => {
   })
 });
 
+router.get('/generate-qr', (req, res, next) => {
+  let secret = speakeasy.generateSecret({length: 20});
+  return res.status(200).json({ 
+    secret: secret.base32,
+    qr_path: encodeURIComponent(secret.otpauth_url)
+  });
+});
+
 router.post('/enable-two-auth', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
@@ -255,7 +263,14 @@ router.post('/disable-two-auth', (req, res, next) => {
           message: 'Two auth already disabled'
         })
       } else {
-        Aleusers.update({ _id: req.params.teamId }, { isTwoAuth: false })
+        if (
+          speakeasy.time.verify({
+            secret: req.body.secret,
+            encoding: 'base32',
+            token: req.body.token
+          })
+          ) {
+          Aleusers.update({ _id: req.params.teamId }, { isTwoAuth: false })
         .exec()
         .then(result_enable_twoauth => {
           return res.status(200).json({
@@ -268,6 +283,12 @@ router.post('/disable-two-auth', (req, res, next) => {
           })
         })
       }
+      else {
+        res.status(500).json({
+          message: 'Failed to verify'
+        })
+      }
+    }
     })
     .catch(err => {
       return res.status(500).json({
@@ -283,7 +304,7 @@ router.post('/disable-two-auth', (req, res, next) => {
 });
 
 router.post('/changeEmail', (req, res, next) => {
-  
+  // Popozhe
 });
 
 router.post('/changePassword', (req, res, next) => {
