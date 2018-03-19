@@ -23,7 +23,7 @@ router.get('/:walletAddress', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token._id})
+    Aleusers.find({_id: decode_token.user_id})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -74,7 +74,7 @@ router.post('/send', (req, res, body) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token._id})
+    Aleusers.find({_id: decode_token.user_id})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {

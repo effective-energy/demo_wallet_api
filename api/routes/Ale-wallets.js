@@ -27,7 +27,7 @@ router.post('/new', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token._id})
+    Aleusers.find({_id: decode_token.user_id})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -115,7 +115,7 @@ router.post('/rename', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token._id})
+    Aleusers.find({_id: decode_token.user_id})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -187,7 +187,7 @@ router.post('/addressInfo', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token._id})
+    Aleusers.find({_id: decode_token.user_id})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -257,7 +257,7 @@ router.post('/redeem', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token._id})
+    Aleusers.find({_id: decode_token.user_id})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {

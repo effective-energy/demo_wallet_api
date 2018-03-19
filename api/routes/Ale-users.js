@@ -35,7 +35,7 @@ router.post('/change-name', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token._id})
+    Aleusers.find({_id: decode_token.user_id})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -316,8 +316,8 @@ router.post('/enable-two-auth', (req, res, next) => {
         })
       ) {
         Aleusers.update({ _id: decode_token.user_id }, { '$set': {
-          twoAuthRecoveryRecovery: req.body.secret,
-          istwoAuthRecovery: true
+          twoAuthRecovery: req.body.secret,
+          isTwoAuth: true
         }})
         .exec()
         .then(result_update => {
@@ -365,7 +365,7 @@ router.post('/disable-two-auth', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token._id})
+    Aleusers.find({_id: decode_token.user_id})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -373,7 +373,7 @@ router.post('/disable-two-auth', (req, res, next) => {
           message: 'User not found'
         })
       }
-      if(!result_found_user[0].istwoAuthRecovery) {
+      if(!result_found_user[0].isTwoAuth) {
         return res.status(500).json({
           message: 'Two auth already disabled'
         })
@@ -385,7 +385,7 @@ router.post('/disable-two-auth', (req, res, next) => {
             token: req.body.token
           })
           ) {
-          Aleusers.update({ _id: decode_token.user_id }, { istwoAuthRecovery: false })
+          Aleusers.update({ _id: decode_token.user_id }, { isTwoAuth: false })
         .exec()
         .then(result_enable_twoAuthRecovery => {
           return res.status(200).json({
@@ -434,7 +434,7 @@ router.post('/changeEmail', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token._id})
+    Aleusers.find({_id: decode_token.user_id})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -623,68 +623,76 @@ router.post('/confirm-reg', (req, res, next) => {
   Aleusers.find({email: confirm_token.email})
   .exec()
   .then(result_found => {
-    if (result_found.length !== 0) {
-      const token = jwt.sign({
-        email: result_found[0].email,
-        userId: result_found[0]._id
-      }, process.env.JWT_KEY, {
-        expiresIn: "30d"
-      });
-
-      res.status(200).json({
-        message: 'User created!',
-        user_token: result_found[0],
-        user_id: result._id
-      });
-
+    if(result_found.length !== 0) {
       return res.status(200).json({
-        message: 'Email already exist!',
-        user_id: result_found,
-        user_token: token
+        message: 'User already exist'
       })
     }
-
-    const newAleUser = new Aleusers({
-      _id: new mongoose.Types.ObjectId(),
-      name: confirm_token.name,
-      email: confirm_token.email,
-      password: confirm_token.password,
-      istwoAuthRecovery: false,
-      twoAuthRecoveryRecovery: "",
-      walletsList: [],
-      rating: -1,
-      competence: [],
-      change_token: ""
-    });
-
-    newAleUser.save()
-    .then(result => {
-      const token = jwt.sign({
-        email: result.email,
-        userId: result._id
-      }, process.env.JWT_KEY, {
-        expiresIn: "30d"
+    Aletoken.find({user_token: req.body.token})
+    .exec()
+    .then(result_found_token => {
+      if(result_found_token.length !== 0) {
+        return res.status(500).json({
+          message: 'Token already exist'
+        })
+      }
+      const newAleUser = new Aleusers({
+        _id: new mongoose.Types.ObjectId(),
+        name: confirm_token.name,
+        email: confirm_token.email,
+        password: confirm_token.password,
+        isTwoAuth: false,
+        twoAuthRecovery: "",
+        walletsList: [],
+        rating: -1,
+        competence: [],
+        change_token: ""
       });
+      newAleUser.save()
+      .then(result_save_user => {
+        const newAleToken = new Aletoken({
+          _id: new mongoose.Types.ObjectId(),
+          user_token: jwt.sign({
+            email: result_save_user.email,
+            userId: result_save_user._id
+          }, process.env.JWT_KEY, {
+            expiresIn: "30d"
+          })
+        });
 
-      res.status(200).json({
-        message: 'User created!',
-        user_token: token,
-        user_id: result._id
-      });
-
+        newAleToken.save()
+        .then(result_save_token => {
+          return res.status(200).json({
+            message: 'User created!',
+            user_token: newAleToken.user_token,
+            user_id: result_save_user._id
+          });
+        })
+        .catch(err => {
+          return res.status(503).json({
+            error: err
+          })
+        })
+      })
+      .catch(err => {
+        return res.status(502).json({
+          error: err
+        })
+      })
     })
     .catch(err => {
-      res.status(500).json({
+      return res.status(500).json({
         error: err
       })
-    });
+    })
   })
   .catch(err => {
-    return res.status(500).json({
+    return res.status(501).json({
       error: err
     })
   })
 });
+
 
 router.post('/restore-password', (req, res, next) => {
   let user_token = req.headers.authorization;
@@ -857,20 +865,15 @@ router.post('/new', (req, res, next) => {
 });
 
 router.post('/login/2fa', (req, res, next) => {
-  Aleusers.find({mail: req.body.email})
+  Aleusers.find({email: req.body.email})
   .exec()
   .then(result_found => {
-    if (result_login.length == 0) {
-      return res.status(401).json({
+    if (result_found.length === 0) {
+      return res.status(404).json({
         message: 'User not found'
-      });
+      })
     }
-    bcrypt.compare(req.body.password, user[0].password, (err, result) => {
-      if (err) {
-        return res.status(401).json({
-          message: 'Auth failed'
-        });
-      }
+    bcrypt.compare(req.body.password, result_found[0].password, (err, result) => {
       if (result) {
         if (speakeasy.time.verify({
           secret: result_found[0].twoAuthRecovery,
@@ -879,8 +882,7 @@ router.post('/login/2fa', (req, res, next) => {
         })) {
           const token = jwt.sign({
             email: result_found[0].email,
-            userId: result_found[0]._id,
-            randomData: randomstring.generate(16)
+            userId: result_found[0]._id
           }, process.env.JWT_KEY, {
             expiresIn: "30d"
           });
@@ -895,7 +897,7 @@ router.post('/login/2fa', (req, res, next) => {
             return res.status(200).json({
               message: 'Auth success',
               user_token: token,
-              twoAuthRecovery_status: result_found[0].istwoAuthRecovery
+              twoAuthRecovery_status: result_found[0].isTwoAuth
             });
           })
           .catch(err => {
@@ -942,7 +944,7 @@ router.get('/get-user-data', (req, res, next) => {
       message: 'User is found',
       name: result_found[0].name,
       email: result_found[0].email,
-      istwoAuthRecovery: result_found[0].istwoAuthRecovery
+      isTwoAuth: result_found[0].isTwoAuth
     })
   })
   .catch(err => {
@@ -958,10 +960,10 @@ router.post('/login', (req, res, next) => {
   .then(result_found => {
     if (result_found.length === 0) {
       return res.status(404).json({
-        message: 'User not found!'
+        message: 'User not found'
       })
     }
-    if (result_found[0].istwoAuthRecovery) {
+    if (result_found[0].isTwoAuth) {
       return res.status(200).json({
         statusLogin: 200,
         message: 'Authorization was successful. Enter the two-factor code.'
@@ -976,8 +978,7 @@ router.post('/login', (req, res, next) => {
         if (result) {
           const token = jwt.sign({
             email: result_found[0].email,
-            user_id: result_found[0]._id,
-            randomData: randomstring.generate(16)
+            user_id: result_found[0]._id
           }, process.env.JWT_KEY, {
             expiresIn: "30d"
           });
@@ -992,7 +993,7 @@ router.post('/login', (req, res, next) => {
             return res.status(200).json({
               message: 'Auth success',
               user_token: token,
-              twoAuthRecovery_status: result_found[0].istwoAuthRecovery
+              twoAuthRecovery_status: result_found[0].isTwoAuth
             });
           })
           .catch(err => {
