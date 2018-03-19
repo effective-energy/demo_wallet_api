@@ -18,6 +18,7 @@ var transporter = nodemailer.createTransport({
 
 const Aleusers = require('../models/Ale-users');
 const Aletoken = require('../models/Ale-token');
+const Alewallet = require('../models/Ale-wallets');
 
 router.post('/change-name', (req, res, next) => {
   let user_token = req.headers.authorization;
@@ -35,7 +36,7 @@ router.post('/change-name', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -147,7 +148,7 @@ router.delete('/logout', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if (result_found_user.length === 0) {
@@ -240,7 +241,7 @@ router.post('/setRating', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aleusers.find({_id: decode_token.user_id})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
   .then(result_found => {
     if (result_found.length === 0) {
@@ -300,7 +301,7 @@ router.post('/enable-two-auth', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -315,7 +316,7 @@ router.post('/enable-two-auth', (req, res, next) => {
           token: req.body.token
         })
       ) {
-        Aleusers.update({ _id: decode_token.user_id }, { '$set': {
+        Aleusers.update({ _id: decode_token.userId }, { '$set': {
           twoAuthRecovery: req.body.secret,
           isTwoAuth: true
         }})
@@ -365,7 +366,7 @@ router.post('/disable-two-auth', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -385,11 +386,11 @@ router.post('/disable-two-auth', (req, res, next) => {
             token: req.body.token
           })
           ) {
-          Aleusers.update({ _id: decode_token.user_id }, { isTwoAuth: false })
+          Aleusers.update({ _id: decode_token.userId }, { isTwoAuth: false })
         .exec()
         .then(result_enable_twoAuthRecovery => {
           return res.status(200).json({
-            message: 'Two auth success enable'
+            message: 'Two auth success disable'
           })
         })
         .catch(err => {
@@ -434,7 +435,7 @@ router.post('/changeEmail', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -457,7 +458,7 @@ router.post('/changeEmail', (req, res, next) => {
           token: req.body.token
         })
       ) {
-        Aleusers.update({ _id: decode_token.user_id }, { '$set': {
+        Aleusers.update({ _id: decode_token.userId }, { '$set': {
           email: req.body.email
         }})
         .exec()
@@ -520,7 +521,7 @@ router.post('/changePassword', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aleusers.find({_id: decode_token.user_id})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
   .then(result_found => {
     if (result_found.length === 0) {
@@ -581,7 +582,7 @@ router.post('change-basic-info', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aleusers.find({_id: decode_token.user_id})
+  Aleusers.find({_id: decode_token.userId})
   .exec(result_found => {
     if(result_found.length === 0) {
       return res.status(404).json({
@@ -702,7 +703,7 @@ router.post('/restore-password', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aleusers.find({_id: decode_token.user_id}).find()
+  Aleusers.find({_id: decode_token.userId}).find()
   .exec()
   .then(result_found => {
     if (result_found.length === 0) {
@@ -932,7 +933,7 @@ router.get('/get-user-data', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aleusers.find({_id: decode_token.user_id})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
   .then(result_found => {
     if (result_found.length === 0) {
@@ -944,7 +945,59 @@ router.get('/get-user-data', (req, res, next) => {
       message: 'User is found',
       name: result_found[0].name,
       email: result_found[0].email,
-      isTwoAuth: result_found[0].isTwoAuth
+      isTwoAuth: result_found[0].isTwoAuth,
+      walletsList: result_found[0].walletsList
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({
+      error: err
+    })
+  })
+});
+
+router.get('/user-wallets', (req, res, next) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
+  .exec()
+  .then(result_found => {
+    if(result_found.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
+      })
+    }
+    Aleusers.find({_id: decode_token.userId})
+    .exec()
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      Alewallet.find()
+      .exec()
+      .then(result_found => {
+        let foundedWallet = result_found.filter(wallet => result_found_user[0].walletsList.includes(wallet.address));
+        //foundedWallet.forEach(function(v) { delete v.seed, delete v._id });
+        return res.status(200).json(foundedWallet);
+      })
+      .catch(err => {
+        res.status(500).json({
+          error: err
+        })
+      });
+
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: err
+      })
     })
   })
   .catch(err => {
@@ -978,7 +1031,7 @@ router.post('/login', (req, res, next) => {
         if (result) {
           const token = jwt.sign({
             email: result_found[0].email,
-            user_id: result_found[0]._id
+            userId: result_found[0]._id
           }, process.env.JWT_KEY, {
             expiresIn: "30d"
           });

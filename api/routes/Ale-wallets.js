@@ -27,7 +27,7 @@ router.post('/new', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -46,7 +46,7 @@ router.post('/new', (req, res, next) => {
         });
         newAleWallet.save()
         .then(result => {
-          Aleusers.update({ _id: req.body.userId }, {
+          Aleusers.update({ _id: decode_token.userId }, {
             $push: { walletsList: newAleWallet.address }
           })
           .exec()
@@ -115,7 +115,7 @@ router.post('/rename', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -187,7 +187,7 @@ router.post('/addressInfo', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -257,7 +257,7 @@ router.post('/redeem', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {

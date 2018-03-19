@@ -2,13 +2,13 @@ const mongoose = require('mongoose');
 
 const aleofferSchema = mongoose.Schema({
 	_id: mongoose.Schema.Types.ObjectId,
-	owner_wallet: {
+	owner_id: {
 		type: String,
 		required: true
 	},
-	contractor_wallet: {
+	contractor_id: {
 		type: String,
-		required: true
+		required: false
 	},
 	requirements: {
 		type: Array,

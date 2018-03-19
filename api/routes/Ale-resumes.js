@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 const Aleresume = require('../models/Ale-resumes');
 const Aletoken = require('../models/Ale-token');
@@ -21,7 +22,7 @@ router.get('/', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if (result_found_user.length === 0) {
@@ -68,7 +69,7 @@ router.post('/resume', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if (result_found_user.length === 0) {
@@ -130,7 +131,7 @@ router.get('/resume/:resumeId', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if (result_found_user.length === 0) {
@@ -183,7 +184,7 @@ router.delete('/resume/:resumeId', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if (result_found_user.length === 0) {

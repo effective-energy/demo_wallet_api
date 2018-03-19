@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 const Aleoffer = require('../models/Ale-offers');
 const Aleusers = require('../models/Ale-users');
@@ -22,7 +23,7 @@ router.get('/', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -70,7 +71,7 @@ router.get('/offer/:offerId', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -107,7 +108,7 @@ router.get('/offer/:offerId', (req, res, next) => {
   })
 });
 
-router.post('/offer', (req, res, next) => {
+router.post('/', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
   if (decode_token.length === 0) {
@@ -123,7 +124,7 @@ router.post('/offer', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -135,11 +136,16 @@ router.post('/offer', (req, res, next) => {
         _id: new mongoose.Types.ObjectId(),
         title: req.body.title,
         description: req.body.description,
-        owner_wallet: req.body.owner_wallet,
+        owner_id: decode_token.userId,
         price: req.body.price,
         requirements: req.body.requirements,
+        timestamp: new Date().getTime(),
         deadline: req.body.deadline,
-        tests: req.body.tests
+        tests: req.body.tests,
+        is_apply: false,
+        is_submited: false,
+        is_completed: false,
+        contractor_id: ""
       })
       newOffer.save()
       .then(result_create_offer => {
@@ -183,7 +189,7 @@ router.delete('/offer/:offerId', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -249,7 +255,7 @@ router.put('/offer/:offerId', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {

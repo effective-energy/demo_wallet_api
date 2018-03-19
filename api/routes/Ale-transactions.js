@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 const Aletransactions = require('../models/Ale-transactions');
 const Alewallet = require('../models/Ale-wallets');
@@ -23,7 +24,7 @@ router.get('/:walletAddress', (req, res, next) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
@@ -74,7 +75,7 @@ router.post('/send', (req, res, body) => {
         message: 'Token not found'
       })
     }
-    Aleusers.find({_id: decode_token.user_id})
+    Aleusers.find({_id: decode_token.userId})
     .exec()
     .then(result_found_user => {
       if(result_found_user.length === 0) {
