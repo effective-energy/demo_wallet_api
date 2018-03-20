@@ -60,122 +60,92 @@ router.get('/:walletAddress', (req, res, next) => {
 });
 
 router.post('/send', (req, res, body) => {
-  let user_token = req.headers.authorization;
-  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
-  if (decode_token.length === 0) {
-    return res.status(404).json({
-      message: 'User token not sent'
-    })
-  }
-  Aletoken.find({user_token: user_token})
+  Alewallet.find({ address: req.body.walletAddress })
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
-      return res.status(404).json({
-        message: 'Token not found'
-      })
-    }
-    Aleusers.find({_id: decode_token.userId})
-    .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      Alewallet.find({ address: req.body.walletAddress })
+  .then(check => {
+    if(check.length !== 0) {
+      Alewallet.find({ address: req.body.walletDestination })
       .exec()
-      .then(check => {
-        if(Alewallet.length !== 0) {
-          Alewallet.find({ address: req.body.walletDestination })
-          .exec()
-          .then(check_dest => {
-            if(check_dest.length !== 0) {
-              if(check[0].balance < req.body.count) {
-                return res.status(401).json({
-                  message: 'Insufficient funds'
-                })
-              } else {
-                const aleNewTransactions = new Aletransactions({
-                  _id: new mongoose.Types.ObjectId(),
-                  walletAddress: req.body.walletAddress,
-                  walletDestination: req.body.walletDestination,
-                  count: req.body.count,
-                  timestamp: Date.parse(new Date()),
-                  balanceInfo: {
-                    before: check[0].balance.toFixed(8),
-                    after: check[0].balance - req.body.count.toFixed(8)
-                  }
-                });
-                aleNewTransactions
-                .save()
-                .then(result_create => {
-                  let updateBalance = Number(check[0].balance) - Number(req.body.count);
-                  Alewallet.update({ address: check[0].address }, {
-                    balance: updateBalance
-                  })
-                  .exec()
-                  .then(success_send => {
-                    let updateBalanceDest = Number(check_dest[0].balance) + Number(req.body.count);
-                    Alewallet.update({ address: check_dest[0].address }, {
-                      balance: updateBalanceDest
-                    })
-                    .exec()
-                    .then(success_send_dest => {
-                      res.status(201).json({
-                        message: 'Success send',
-                        model: send
-                      })
-                    })
-                    .catch(err => {
-                      return res.status(504).json({
-                        error: err
-                      })
-                    })
-                  })
-                  .catch(err => {
-                    return res.status(503).json({
-                      error: err
-                    })
+      .then(check_dest => {
+        if(check_dest.length !== 0) {
+          if(check[0].balance < req.body.count) {
+            return res.status(401).json({
+              message: 'Insufficient funds'
+            })
+          } else {
+            const aleNewTransactions = new Aletransactions({
+              _id: new mongoose.Types.ObjectId(),
+              walletAddress: req.body.walletAddress,
+              walletDestination: req.body.walletDestination,
+              count: req.body.count,
+              timestamp: Date.parse(new Date()),
+              balanceInfo: {
+                before: check[0].balance.toFixed(8),
+                after: check[0].balance - req.body.count.toFixed(8)
+              }
+            });
+            aleNewTransactions
+            .save()
+            .then(result_create => {
+              let updateBalance = Number(check[0].balance) - Number(req.body.count);
+              let updateTotalTransactions = Number(check[0].total_transactions) + 1;
+              Alewallet.update({ address: check[0].address }, { '$set': {
+                balance: updateBalance,
+                total_transactions: updateTotalTransactions
+              }})
+              .exec()
+              .then(success_send => {
+                let updateBalanceDest = Number(check_dest[0].balance) + Number(req.body.count);
+                let updateTotalTransactionsDest = Number(check_dest[0].total_transactions) + 1;
+
+                Alewallet.update({ address: check_dest[0].address }, { '$set': {
+                  balance: updateBalanceDest,
+                  total_transactions: updateTotalTransactionsDest
+                }})
+                .exec()
+                .then(success_send_dest => {
+                  return res.status(201).json({
+                    message: 'Success send',
+                    model: success_send_dest
                   })
                 })
                 .catch(err => {
-                  return res.status(201).json({
+                  return res.status(504).json({
                     error: err
                   })
                 })
-              }
-            } else {
-              return res.status(404).json({
-                message: 'Address not found'
               })
-            }
-          })
-          .catch(err => {
-            return res.status(502).json({
-              error: err
+              .catch(err => {
+                return res.status(503).json({
+                  error: err
+                })
+              })
             })
-          })
+            .catch(err => {
+              return res.status(201).json({
+                error: err
+              })
+            })
+          }
         } else {
           return res.status(404).json({
             message: 'Address not found'
           })
         }
       })
-      .catch(error => {
-        return res.status(501).json({
+      .catch(err => {
+        return res.status(502).json({
           error: err
         })
       })
-    })
-    .catch(err => {
-      return res.status(500).json({
-        error: err
+    } else {
+      return res.status(404).json({
+        message: 'Address not found'
       })
-    })
+    }
   })
-  .catch(err => {
-    return res.status(500).json({
+  .catch(error => {
+    return res.status(501).json({
       error: err
     })
   })

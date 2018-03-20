@@ -11,6 +11,16 @@ const Alewallet = require('../models/Ale-wallets');
 const Aleusers = require('../models/Ale-users');
 const Aletoken = require('../models/Ale-token');
 
+router.get('/crypto', (req, res, next) => {
+  return res.status(200).json({
+    'btc': 10000,
+    'eth': 500,
+    'bch': 1000,
+    'ltc': 150,
+    'dash': 600
+  })
+});
+
 router.post('/new', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
@@ -42,7 +52,8 @@ router.post('/new', (req, res, next) => {
           name: req.body.name,
           balance: 100,
           seed: sha256(req.body.seed.join().replace(/,/g , " ")),
-          address: randomstring.generate(47)
+          address: randomstring.generate(47),
+          total_transactions: 0
         });
         newAleWallet.save()
         .then(result => {

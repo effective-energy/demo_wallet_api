@@ -8,11 +8,11 @@ const speakeasy = require('speakeasy');
 const randomstring = require('randomstring');
 
 var transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 25,
+  host: '',
+  port: '',
   auth: {
-    user: 'crowdsystems78@gmail.com',
-    pass: '12345678ALE'
+    user: '',
+    pass: ''
   }
 });
 
@@ -71,7 +71,7 @@ router.post('/change-name', (req, res, next) => {
       error: err
     })
   })
-})
+});
 
 router.post('/restore-secret', (req, res, next) => {
   let user_token = req.headers.authorization;
@@ -941,12 +941,36 @@ router.get('/get-user-data', (req, res, next) => {
         message: 'User is not found'
       })
     }
-    return res.status(200).json({
-      message: 'User is found',
-      name: result_found[0].name,
-      email: result_found[0].email,
-      isTwoAuth: result_found[0].isTwoAuth,
-      walletsList: result_found[0].walletsList
+    Alewallet.find({address: result_found[0].walletsList})
+    .exec()
+    .then(result_found_wallets => {
+      if(result_found_wallets.length === 0) {
+        return res.status(200).json({
+          message: 'User is found',
+          name: result_found[0].name,
+          email: result_found[0].email,
+          isTwoAuth: result_found[0].isTwoAuth,
+          walletsList: result_found[0].walletsList,
+          haveTransactions: false
+        })
+      } else {
+        let sumTransaction = result_found_wallets.reduce((total, amount) => total.total_transactions + amount.total_transactions);
+        let totalCountTransactions = false;
+        if(sumTransaction !== 0) totalCountTransactions = true;
+        return res.status(200).json({
+          message: 'User is found',
+          name: result_found[0].name,
+          email: result_found[0].email,
+          isTwoAuth: result_found[0].isTwoAuth,
+          walletsList: result_found[0].walletsList,
+          haveTransactions: totalCountTransactions
+        })
+      }
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: err
+      })
     })
   })
   .catch(err => {

@@ -14,6 +14,10 @@ const aleWalletSchema = mongoose.Schema({
 		type: Number,
 		required: true
 	},
+	total_transactions: {
+		type: Number,
+		required: true
+	},
 	seed: {
 		type: String,
 		required: true
