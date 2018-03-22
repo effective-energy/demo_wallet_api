@@ -6,19 +6,35 @@ const jwt = require('jsonwebtoken');
 const sha256 = require('sha256');
 const bip39 = require('bip39');
 const randomstring = require('randomstring');
+const https = require('https');
 
 const Alewallet = require('../models/Ale-wallets');
 const Aleusers = require('../models/Ale-users');
 const Aletoken = require('../models/Ale-token');
 
 router.get('/crypto', (req, res, next) => {
-  return res.status(200).json({
-    'btc': 10000,
-    'eth': 500,
-    'bch': 1000,
-    'ltc': 150,
-    'dash': 600
-  })
+  https.get('https://api.coinmarketcap.com/v1/ticker/', (resp) => {
+    let data = '';
+      resp.on('data', (chunk) => {
+        data += chunk;
+      });
+      resp.on('end', () => {
+        let allCrypto = JSON.parse(data);
+        let supportedCrypto = ['BTC', 'ETH', 'BCH', 'LTC', 'DASH'];
+
+        let foundedWallet = allCrypto.filter(kekx => supportedCrypto.includes(kekx.symbol));
+        let kek = [];
+        foundedWallet.forEach(function(v) {
+          kek.push({
+            symbol: v.symbol,
+            price: v.price_usd
+          })
+        });
+        return res.status(200).json(kek);
+      });
+  }).on("error", (err) => {
+    console.log("Error: " + err.message);
+  });
 });
 
 router.post('/new', (req, res, next) => {

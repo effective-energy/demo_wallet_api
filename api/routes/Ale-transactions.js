@@ -35,10 +35,17 @@ router.get('/:walletAddress', (req, res, next) => {
       Aletransactions.find()
       .exec()
       .then(result => {
-        let data = result.filter(item => {
+        var foundTransactions = result.filter(item => {
           return item.walletAddress === req.params.walletAddress || item.walletDestination === req.params.walletAddress
-        })
-        res.status(200).json(data)
+        });
+        for(let i=0;i<foundTransactions.length;i++) {
+          if(req.params.walletAddress === foundTransactions[i].walletDestination) {
+            foundTransactions[i].balanceInfo.before = foundTransactions[i].balanceInfoDest.before;
+            foundTransactions[i].balanceInfo.after = foundTransactions[i].balanceInfoDest.after;
+          }
+          foundTransactions[i].balanceInfoDest = {}
+        }
+        return res.status(200).json(foundTransactions)
       })
       .catch(err => {
         res.status(500).json({
@@ -81,7 +88,11 @@ router.post('/send', (req, res, body) => {
               timestamp: Date.parse(new Date()),
               balanceInfo: {
                 before: check[0].balance.toFixed(8),
-                after: check[0].balance - req.body.count.toFixed(8)
+                after: Number(check[0].balance) - Number(req.body.count.toFixed(8))
+              },
+              balanceInfoDest: {
+                before: check_dest[0].balance.toFixed(8),
+                after: Number(check_dest[0].balance) + Number(req.body.count.toFixed(8))
               }
             });
             aleNewTransactions

@@ -9,7 +9,8 @@ const randomstring = require('randomstring');
 
 var transporter = nodemailer.createTransport({
   host: '',
-  port: '',
+  port: 465,
+  secure: true,
   auth: {
     user: '',
     pass: ''
@@ -73,49 +74,91 @@ router.post('/change-name', (req, res, next) => {
   })
 });
 
-router.post('/restore-secret', (req, res, next) => {
-  let user_token = req.headers.authorization;
-  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
-  if (decode_token.length === 0) {
-    return res.status(404).json({
-      message: 'User token not sent'
-    })
-  }
-  Aletoken.find({user_token: user_token})
+router.post('/recovery-confirm', (req, res, next) => {
+  let recoveryToken = jwt.verify(req.body.recoveryToken, process.env.JWT_KEY);
+  if(recoveryToken.email === undefined || recoveryToken.salt === undefined) return res.status(200).json({
+    message: 'Token is invalid'
+  })
+  Aleusers.find({email: recoveryToken.email, change_token: recoveryToken.salt})
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
-      return res.status(404).json({
-        message: 'Token not found'
+  .then(result_found => {
+    if(result_found.length === 0) {
+      return res.status(200).json({
+        message: 'User not found'
       })
     }
-    Aleusers.find({_id: decode_token._id, twoAuthRecovery: req.body.secret})
-    .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
+    let newPassword = randomstring.generate(16);
+    bcrypt.hash(newPassword, 10, (err, hash) => {
+      if (err) {
+        return res.status(500).json({
+          error: err
+        });
       }
-      let secret = speakeasy.generateSecret({length: 20});
-      res.status(200).json({ 
-        secret: secret.base32,
-        qrPath: encodeURIComponent(secret.otpauth_url)
-      });
-      return Aleusers.update(
-        { _id: result_found_user[0]._id },
-        { twoAuthRecovery: secret.base32 }
-      )
+      Aleusers.update({_id: result_found[0]._id}, { '$set': {
+        password: hash,
+        change_token: ""
+      }})
       .exec()
-      .then(result => {
-        return res.status(200).json({ 
-          secret: secret.base32,
-          qrPath: encodeURIComponent(secret.otpauth_url)
+      .then(result_reset_password => {
+
+        return res.status(200).json({
+          message: 'Passwords success recovery',
+          newPassword: newPassword
         });
       })
       .catch(err => {
         res.status(500).json({
           error: err
+        });
+      });
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({
+      error: err
+    })
+  })
+});
+
+router.post('/recovery', (req, res, next) => {
+  Aleusers.find({email: req.body.email})
+  .exec()
+  .then(result_found => {
+    if(result_found.length === 0) {
+      return res.status(200).json({
+        message: 'User not found'
+      })
+    }
+
+    let salt = randomstring.generate(16)
+
+    let generrateRecoveryLink = jwt.sign({
+      email: req.body.email,
+      salt: salt
+    }, process.env.JWT_KEY, {
+      expiresIn: "30d"
+    });
+
+    Aleusers.update(
+      {_id: result_found[0]._id},
+      { change_token: salt }
+    )
+    .then(result_update_token => {
+      const mailOptions = {
+        from: 'noreply@alehub.awsapps.com',
+        to: req.body.email,
+        subject: 'Recovery password',
+        text: `Your link to recovery your account - http://localhost:8080/#/recover-confirm/${generrateRecoveryLink}. The link is valid for 30 days.`
+      };
+
+      transporter.sendMail(mailOptions, function(error, info) {
+        if (error) {
+          return res.status(500).json({
+            error: error
+          })
+        }
+        return res.status(200).json({
+          message: 'Link successfully sent'
         })
       });
     })
@@ -124,6 +167,45 @@ router.post('/restore-secret', (req, res, next) => {
         error: err
       })
     })
+
+  })
+  .catch(err => {
+    return res.status(500).json({
+      error: err
+    })
+  })
+});
+
+router.post('/restore-secret', (req, res, next) => {
+  Aleusers.find({ twoAuthRecovery: req.body.secret})
+  .exec()
+  .then(result_found_user => {
+    if(result_found_user.length === 0) {
+      return res.status(404).json({
+        message: 'User not found'
+      })
+    }
+    let secret = speakeasy.generateSecret({length: 20});
+    res.status(200).json({ 
+      secret: secret.base32,
+      qrPath: encodeURIComponent(secret.otpauth_url)
+    });
+    return Aleusers.update(
+      { _id: result_found_user[0]._id },
+      { twoAuthRecovery: secret.base32 }
+    )
+    .exec()
+    .then(result => {
+      return res.status(200).json({ 
+        secret: secret.base32,
+        qrPath: encodeURIComponent(secret.otpauth_url)
+      });
+    })
+    .catch(err => {
+      res.status(500).json({
+        error: err
+      })
+    });
   })
   .catch(err => {
     return res.status(500).json({
@@ -419,6 +501,11 @@ router.post('/disable-two-auth', (req, res, next) => {
   })
 });
 
+router.post('/confirm-change-email', (req, res, next) => {
+  let decode_token = jwt.verify(confirmToken, process.env.JWT_KEY);
+  return res.status(200).json(decode_token);
+});
+
 router.post('/changeEmail', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
@@ -458,36 +545,68 @@ router.post('/changeEmail', (req, res, next) => {
           token: req.body.token
         })
       ) {
-        Aleusers.update({ _id: decode_token.userId }, { '$set': {
-          email: req.body.email
-        }})
-        .exec()
-        .then(result_update => {
 
-          const mailOptions = {
-            from: 'crowdsystems78@gmail.com',
+        let emailToken = randomstring.generate(16);
+
+        let confirmToken = jwt.sign({
+          email: req.body.email,
+          userId: decode_token.userId,
+          salt: randomstring.generate(16),
+          token: emailToken,
+          isChange: true
+        }, process.env.JWT_KEY, {
+          expiresIn: "30d"
+        });
+
+        let cancelToken = jwt.sign({
+          email: req.body.email,
+          userId: decode_token.userId,
+          salt: randomstring.generate(16),
+          token: emailToken,
+          isChange: false
+        }, process.env.JWT_KEY, {
+          expiresIn: "30d"
+        });
+
+        Aleusers.update(
+          { _id: result_found_user[0]._id },
+          { email_token: emailToken }
+        )
+        .then(result_update_email_token => {
+          transporter.sendMail({
+            from: 'noreply@alehub.awsapps.com',
             to: result_found_user[0].email,
-            subject: 'Email is change',
-            text: `Yout email change to ${req.body.email}`
-          };
-
-          transporter.sendMail(mailOptions, function(error, info) {
+            subject: 'Confirm mail change',
+            text: `To change email, follow the link - ${confirmToken}. The link is valid for 30 days.`
+          }, function(error, info) {
             if (error) {
               return res.status(500).json({
                 error: error
               })
             }
-            return res.status(200).json({
-              message: 'Success change user email'
-            })
+            transporter.sendMail({
+              from: 'noreply@alehub.awsapps.com',
+              to: req.body.email,
+              subject: 'Confirm mail change',
+              text: `Someone requested a change of mail for your account. If this is not done by you, go for the link - ${cancelToken}. The link is valid for 30 days.`
+            }, function(error, info) {
+              if (error) {
+                return res.status(500).json({
+                  error: error
+                })
+              }
+              return res.status(200).json({
+                message: 'Mails success sent'
+              })
+            });
           });
-          
         })
         .catch(err => {
-          res.status(500).json({
+          return res.status(500).json({
             error: err
           })
-        });
+        })
+
       } else {
         res.status(500).json({
           message: 'Failed to verify'
@@ -530,40 +649,46 @@ router.post('/changePassword', (req, res, next) => {
       })
     }
 
-    if (req.body.new !== req.body.repeat) {
-      return res.status(200).json({
-        message: 'Passwords do not match'
-      })
-    }
-
-    if (bcrypt.compareSync(req.body.old, result_found[0].password)) {
-      bcrypt.hash(req.body.new, 10, (err, hash) => {
-        if (err) {
-          return res.status(500).json({
-            error: err
-          });
-        }
-
-        Aleusers.update(
-          { _id: result_found[0]._id },
-          { password: hash }
-        )
-        .exec()
-        .then(result_change_password => {
-          return res.status(200).json({
-            message: 'Password update!'
-          })  
+    if (
+        speakeasy.time.verify({
+          secret: result_found[0].twoAuthRecovery,
+          encoding: 'base32',
+          token: req.body.token
         })
-        .catch(err => {
-          res.status(500).json({
-            error: err
+      ) {
+      if (bcrypt.compareSync(req.body.old, result_found[0].password)) {
+        bcrypt.hash(req.body.new, 10, (err, hash) => {
+          if (err) {
+            return res.status(500).json({
+              error: err
+            });
+          }
+
+          Aleusers.update(
+            { _id: result_found[0]._id },
+            { password: hash }
+          )
+          .exec()
+          .then(result_change_password => {
+            return res.status(200).json({
+              message: 'Password update'
+            })  
+          })
+          .catch(err => {
+            res.status(500).json({
+              error: err
+            });
           });
-        });
-      })
-    }
-    else {
-      return res.status(401).json({
-        message: 'Passwords is incorrect'
+        })
+      }
+      else {
+        return res.status(401).json({
+          message: 'Passwords is incorrect'
+        })
+      }
+    } else {
+      res.status(500).json({
+        message: 'Failed to verify'
       })
     }
   })
@@ -574,7 +699,7 @@ router.post('/changePassword', (req, res, next) => {
   });
 });
 
-router.post('change-basic-info', (req, res, next) => {
+router.post('/change-basic-info', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
   if (decode_token.length === 0) {
@@ -647,7 +772,8 @@ router.post('/confirm-reg', (req, res, next) => {
         walletsList: [],
         rating: -1,
         competence: [],
-        change_token: ""
+        change_token: "",
+        email_token: ""
       });
       newAleUser.save()
       .then(result_save_user => {
@@ -694,8 +820,7 @@ router.post('/confirm-reg', (req, res, next) => {
   })
 });
 
-
-router.post('/restore-password', (req, res, next) => {
+router.post('/change-password', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
   if (decode_token.length === 0) {
@@ -726,7 +851,7 @@ router.post('/restore-password', (req, res, next) => {
       .then(result_reset_password => {
 
         const mailOptions = {
-          from: 'crowdsystems78@gmail.com',
+          from: 'noreply@alehub.awsapps.com',
           to: result_found[0].email,
           subject: 'Restore password',
           text: `New password - ${newPassword}`
@@ -839,7 +964,7 @@ router.post('/new', (req, res, next) => {
         });
 
         const mailOptions = {
-          from: 'crowdsystems78@gmail.com',
+          from: 'noreply@alehub.awsapps.com',
           to: req.body.email,
           subject: 'Confirmation register',
           text: `To complete the registration, click the link - http://localhost:8081/#/registration/confirmationuser/${confirmLink}. The link is valid for 30 days.`

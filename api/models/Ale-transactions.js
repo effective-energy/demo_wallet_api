@@ -22,6 +22,10 @@ const aleTransactionsSchema = mongoose.Schema({
 		before: Number,
 		after: Number
 	},
+	balanceInfoDest: {
+		before: Number,
+		after: Number
+	},
 	__v: {
 		type: Number,
 		select: false
