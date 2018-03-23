@@ -10,6 +10,7 @@ const aleTransactionsRoutes = require('./api/routes/Ale-transactions');
 const aleUsersRoutes = require('./api/routes/Ale-users');
 const aleOffersRoutes = require('./api/routes/Ale-offers');
 const aleResumesRoutes = require('./api/routes/Ale-resumes');
+const aleNotificationsRoutes = require('./api/routes/Ale-notifications');
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
@@ -50,6 +51,7 @@ app.use('/transactions', aleTransactionsRoutes);
 app.use('/users', aleUsersRoutes);
 app.use('/offers', aleOffersRoutes);
 app.use('/resumes', aleResumesRoutes);
+app.use('/notifications', aleNotificationsRoutes);
 
 app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 

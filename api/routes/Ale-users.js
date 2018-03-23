@@ -9,8 +9,8 @@ const randomstring = require('randomstring');
 
 var transporter = nodemailer.createTransport({
   host: '',
-  port: 465,
-  secure: true,
+  port: '',
+  secure: '',
   auth: {
     user: '',
     pass: ''
@@ -148,10 +148,9 @@ router.post('/recovery', (req, res, next) => {
         from: 'noreply@alehub.awsapps.com',
         to: req.body.email,
         subject: 'Recovery password',
-        text: `Your link to recovery your account - http://localhost:8080/#/recover-confirm/${generrateRecoveryLink}. The link is valid for 30 days.`
+        text: Your link to recovery your account - http://localhost:8080/#/recover-confirm/${generrateRecoveryLink}. The link is valid for 30 days.
       };
-
-      transporter.sendMail(mailOptions, function(error, info) {
+    transporter.sendMail(mailOptions, function(error, info) {
         if (error) {
           return res.status(500).json({
             error: error
@@ -567,8 +566,7 @@ router.post('/changeEmail', (req, res, next) => {
         }, process.env.JWT_KEY, {
           expiresIn: "30d"
         });
-
-        Aleusers.update(
+      Aleusers.update(
           { _id: result_found_user[0]._id },
           { email_token: emailToken }
         )
@@ -577,7 +575,7 @@ router.post('/changeEmail', (req, res, next) => {
             from: 'noreply@alehub.awsapps.com',
             to: result_found_user[0].email,
             subject: 'Confirm mail change',
-            text: `To change email, follow the link - ${confirmToken}. The link is valid for 30 days.`
+            text: To change email, follow the link - ${confirmToken}. The link is valid for 30 days.
           }, function(error, info) {
             if (error) {
               return res.status(500).json({
@@ -588,7 +586,7 @@ router.post('/changeEmail', (req, res, next) => {
               from: 'noreply@alehub.awsapps.com',
               to: req.body.email,
               subject: 'Confirm mail change',
-              text: `Someone requested a change of mail for your account. If this is not done by you, go for the link - ${cancelToken}. The link is valid for 30 days.`
+              text: Someone requested a change of mail for your account. If this is not done by you, go for the link - ${cancelToken}. The link is valid for 30 days.
             }, function(error, info) {
               if (error) {
                 return res.status(500).json({
@@ -849,12 +847,11 @@ router.post('/change-password', (req, res, next) => {
       )
       .exec()
       .then(result_reset_password => {
-
-        const mailOptions = {
+      const mailOptions = {
           from: 'noreply@alehub.awsapps.com',
           to: result_found[0].email,
           subject: 'Restore password',
-          text: `New password - ${newPassword}`
+          text: New password - ${newPassword}
         };
 
         transporter.sendMail(mailOptions, function(error, info) {
@@ -967,7 +964,7 @@ router.post('/new', (req, res, next) => {
           from: 'noreply@alehub.awsapps.com',
           to: req.body.email,
           subject: 'Confirmation register',
-          text: `To complete the registration, click the link - http://localhost:8081/#/registration/confirmationuser/${confirmLink}. The link is valid for 30 days.`
+          text: To complete the registration, click the link - http://localhost:8081/#/registration/confirmationuser/${confirmLink}. The link is valid for 30 days.
         };
 
         transporter.sendMail(mailOptions, function(error, info) {
