@@ -6,9 +6,29 @@ const alenotificationsSchema = mongoose.Schema({
 		type: String,
 		required: true
 	},
-	text: {
+	isDeleted: {
+		type: Boolean,
+		required: true
+	},
+	isSubtitle: {
+		type: Boolean,
+		required: true
+	},
+	date: {
+		type: Number,
+		required: true
+	},
+	title: {
 		type: String,
 		required: true
+	},
+	subTitle: {
+		type: String,
+		required: false
+	},
+	changes: {
+		type: Array,
+		required: false
 	},
 	__v: {
 		type: Number,

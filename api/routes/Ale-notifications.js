@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 const Alenotifications = require('../models/Ale-notifications');
 const Aleusers = require('../models/Ale-users');
 const Aletoken = require('../models/Ale-token');
 
-router.get('/', (req, res, next) => {
+router.get('/all', (req, res, next) => {
   Alenotifications.find()
   .exec()
   .then(result_found => {
@@ -45,8 +46,14 @@ router.post('/', (req, res, next) => {
       }
       let newNotifications = new Alenotifications({
         _id: new mongoose.Types.ObjectId(),
-        user_id: req.body.user_id,
-        text: req.body.text
+        user_id: decode_token.userId,
+        text: req.body.text,
+        isDeleted: req.body.isDeleted,
+        isSubtitle: req.body.isSubtitle,
+        date: new Date().getTime(),
+        title: req.body.title,
+        subTitle: req.body.subTitle,
+        changes: req.body.changes
       });
       newNotifications.save()
       .then(result_save => {
@@ -74,7 +81,7 @@ router.post('/', (req, res, next) => {
   })
 });
 
-router.get('/:userId', (req, res, next) => {
+router.get('/', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
   if (decode_token.length === 0) {
@@ -98,14 +105,9 @@ router.get('/:userId', (req, res, next) => {
           message: 'User not found'
         })
       }
-      Alenotifications.find({user_id: req.params.userId})
+      Alenotifications.find({user_id: decode_token.userId})
       .exec()
       .then(result_found => {
-        if(result_found === 0) {
-          return res.status(200).json({
-            message: 'Notifications not found'
-          })
-        }
         return res.status(200).json(result_found)
       })
       .catch(err => {
