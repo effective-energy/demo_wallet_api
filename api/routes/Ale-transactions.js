@@ -49,19 +49,19 @@ router.get('/:walletAddress', (req, res, next) => {
       })
       .catch(err => {
         res.status(500).json({
-          error: err
+          message: 'Server error when searching an transactions'
         })
       });
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -122,19 +122,19 @@ router.post('/send', (req, res, body) => {
                 })
                 .catch(err => {
                   return res.status(504).json({
-                    error: err
+                    message: 'Server error while updating user balance'
                   })
                 })
               })
               .catch(err => {
                 return res.status(503).json({
-                  error: err
+                  message: 'Server error while updating user balance'
                 })
               })
             })
             .catch(err => {
               return res.status(201).json({
-                error: err
+                message: 'Server error when creating transaction'
               })
             })
           }
@@ -146,7 +146,7 @@ router.post('/send', (req, res, body) => {
       })
       .catch(err => {
         return res.status(502).json({
-          error: err
+          message: 'Server error while searching for wallet'
         })
       })
     } else {
@@ -157,7 +157,7 @@ router.post('/send', (req, res, body) => {
   })
   .catch(error => {
     return res.status(501).json({
-      error: err
+      message: 'Server error while searching for wallet'
     })
   })
 });
@@ -170,7 +170,7 @@ router.get('/', (req, res, next) => {
   })
   .catch(err => {
     res.status(500).json({
-      error: err
+      message: 'Server error when searching an transactions'
     })
   });
 });

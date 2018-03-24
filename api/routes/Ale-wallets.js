@@ -22,18 +22,20 @@ router.get('/crypto', (req, res, next) => {
         let allCrypto = JSON.parse(data);
         let supportedCrypto = ['BTC', 'ETH', 'BCH', 'LTC', 'DASH'];
 
-        let foundedWallet = allCrypto.filter(kekx => supportedCrypto.includes(kekx.symbol));
-        let kek = [];
-        foundedWallet.forEach(function(v) {
-          kek.push({
-            symbol: v.symbol,
-            price: v.price_usd
+        let foundedWallet = allCrypto.filter(item => supportedCrypto.includes(item.symbol));
+        let foundedCrypto = [];
+        foundedWallet.forEach(function(crypto) {
+          foundedCrypto.push({
+            symbol: crypto.symbol,
+            price: crypto.price_usd
           })
         });
-        return res.status(200).json(kek);
+        return res.status(200).json(foundedCrypto);
       });
   }).on("error", (err) => {
-    console.log("Error: " + err.message);
+    return res.status(500).json({
+      message: 'Server error when searching cryptocurrency'
+    })
   });
 });
 
@@ -85,13 +87,13 @@ router.post('/new', (req, res, next) => {
           })
           .catch(error => {
             return res.status(500).json({
-              error: err
+              message: 'Error adding user wallet'
             })
           })
         })
         .catch(err => {
           return res.status(500).json({
-            error: err
+            message: 'Error when creating wallet'
           })
         })
       } else {
@@ -102,13 +104,13 @@ router.post('/new', (req, res, next) => {
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -121,7 +123,7 @@ router.get('/', (req, res, next) => {
   })
   .catch(err => {
     res.status(500).json({
-      error: err
+      message: 'Server error when searching wallets'
     })
   });
 });
@@ -174,26 +176,26 @@ router.post('/rename', (req, res, next) => {
           })
           .catch(err => {
             return res.status(505).json({
-              error: err
+              message: 'Server error when rename wallet'
             })
           })
         }
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when searching wallet'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -232,19 +234,19 @@ router.post('/addressInfo', (req, res, next) => {
       })
       .catch(err => {
         res.status(500).json({
-          error: err
+          message: 'Server error when searching wallets'
         })
       });
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -256,16 +258,51 @@ router.get('/seed', (req, res, next) => {
 });
 
 router.delete('/delete/:id', (req, res, next) => {
-  Alewallet.remove({ _id: req.params.id })
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
   .exec()
-  .then(result => {
-    res.status(200).json(result);
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
+      })
+    }
+    Aleusers.find({_id: decode_token.userId})
+    .exec()
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      Alewallet.remove({ _id: req.params.id })
+      .exec()
+      .then(result => {
+        res.status(200).json(result);
+      })
+      .catch(err => {
+        res.status(500).json({
+          message: 'Server error when deleting wallet'
+        })
+      });
+    })
+    .catch(err => {
+      return res.status(500).json({
+        message: 'Server error when searching for a user by token'
+      })
+    })
   })
   .catch(err => {
-    res.status(500).json({
-      error: err
+    return res.status(500).json({
+      message: 'Server error when searching token'
     })
-  });
+  })
 });
 
 router.post('/redeem', (req, res, next) => {
@@ -309,7 +346,7 @@ router.post('/redeem', (req, res, next) => {
         })
         .catch(err => {
           return res.status(500).json({
-            error: err
+            message: 'Server error when searching wallets'
           })
         })
       } else {
@@ -320,13 +357,13 @@ router.post('/redeem', (req, res, next) => {
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });

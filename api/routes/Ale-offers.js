@@ -38,19 +38,19 @@ router.get('/', (req, res, next) => {
       })
       .catch(err => {
         res.status(500).json({
-          error: err
+          message: 'Server error when searching for an offers'
         })
       });
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -91,19 +91,19 @@ router.get('/offer/:offerId', (req, res, next) => {
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when searching for an offers'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -156,19 +156,19 @@ router.post('/', (req, res, next) => {
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when creating an offer'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -215,26 +215,26 @@ router.delete('/offer/:offerId', (req, res, next) => {
           })
           .catch(err => {
             res.status(500).json({
-              error: err
+              message: 'Server error when deleting an offer'
             })
           });
         });
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when searching an offer'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -285,25 +285,25 @@ router.put('/offer/:offerId', (req, res, next) => {
         })
         .catch(err => {
           res.status(500).json({
-            error: err
+            message: 'Server error when changing an offer'
           })
         });
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when searching an offer'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });

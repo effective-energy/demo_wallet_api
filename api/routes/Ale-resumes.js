@@ -37,19 +37,19 @@ router.get('/', (req, res, next) => {
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when searching resume'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -98,19 +98,19 @@ router.post('/resume', (req, res, next) => {
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when creating resume'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -151,19 +151,19 @@ router.get('/resume/:resumeId', (req, res, next) => {
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when searching resume'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -209,25 +209,25 @@ router.delete('/resume/:resumeId', (req, res, next) => {
         })
         .catch(err => {
           return res.status(500).json({
-            error: err
+            message: 'Server error when deleting resume'
           })
         })
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when searching resume'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });

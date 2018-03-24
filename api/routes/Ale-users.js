@@ -57,19 +57,19 @@ router.post('/change-name', (req, res, next) => {
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when update user data'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching for a user by token'
     })
   })
 });
@@ -100,7 +100,6 @@ router.post('/recovery-confirm', (req, res, next) => {
       }})
       .exec()
       .then(result_reset_password => {
-
         return res.status(200).json({
           message: 'Passwords success recovery',
           newPassword: newPassword
@@ -108,14 +107,14 @@ router.post('/recovery-confirm', (req, res, next) => {
       })
       .catch(err => {
         res.status(500).json({
-          error: err
+          message: 'Server error when update user data'
         });
       });
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching user by email'
     })
   })
 });
@@ -144,16 +143,18 @@ router.post('/recovery', (req, res, next) => {
       { change_token: salt }
     )
     .then(result_update_token => {
+
       const mailOptions = {
         from: 'noreply@alehub.awsapps.com',
         to: req.body.email,
         subject: 'Recovery password',
         text: `Your link to recovery your account - http://localhost:8080/#/recover-confirm/${generrateRecoveryLink}. The link is valid for 30 days.`
       };
-    transporter.sendMail(mailOptions, function(error, info) {
+
+      transporter.sendMail(mailOptions, function(error, info) {
         if (error) {
           return res.status(500).json({
-            error: error
+            message: 'Server error when send email'
           })
         }
         return res.status(200).json({
@@ -163,14 +164,14 @@ router.post('/recovery', (req, res, next) => {
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when changed user data'
       })
     })
 
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching user by email'
     })
   })
 });
@@ -208,7 +209,7 @@ router.post('/restore-secret', (req, res, next) => {
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching user by secret two-auth'
     })
   })
 });
@@ -246,19 +247,19 @@ router.delete('/logout', (req, res, next) => {
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when deleted user-token'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -290,13 +291,13 @@ router.post('/check-login', (req, res, next) => {
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching user by id'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -309,7 +310,7 @@ router.get('/', (req, res, next) => {
   })
   .catch(err => {
     res.status(500).json({
-      error: err
+      message: 'Server error when searching users'
     })
   });
 });
@@ -347,13 +348,13 @@ router.post('/setRating', (req, res, next) => {
     })
     .then(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -409,7 +410,7 @@ router.post('/enable-two-auth', (req, res, next) => {
         })
         .catch(err => {
           res.status(500).json({
-            error: err
+            message: 'Server error when changed user data'
           })
         });
       } else {
@@ -420,13 +421,13 @@ router.post('/enable-two-auth', (req, res, next) => {
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -476,7 +477,7 @@ router.post('/disable-two-auth', (req, res, next) => {
         })
         .catch(err => {
           return res.status(500).json({
-            error: err
+            message: 'Server error when changed user data'
           })
         })
       }
@@ -489,13 +490,13 @@ router.post('/disable-two-auth', (req, res, next) => {
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -579,7 +580,7 @@ router.post('/changeEmail', (req, res, next) => {
           }, function(error, info) {
             if (error) {
               return res.status(500).json({
-                error: error
+                message: 'Server error when send email'
               })
             }
             transporter.sendMail({
@@ -590,7 +591,7 @@ router.post('/changeEmail', (req, res, next) => {
             }, function(error, info) {
               if (error) {
                 return res.status(500).json({
-                  error: error
+                  message: 'Server error when send email'
                 })
               }
               return res.status(200).json({
@@ -601,7 +602,7 @@ router.post('/changeEmail', (req, res, next) => {
         })
         .catch(err => {
           return res.status(500).json({
-            error: err
+            message: 'Server error when change user data'
           })
         })
 
@@ -613,19 +614,19 @@ router.post('/changeEmail', (req, res, next) => {
       })
       .catch(err => {
         return res.status(500).json({
-          error: err
+          message: 'Server error when searching user by email'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -658,7 +659,7 @@ router.post('/changePassword', (req, res, next) => {
         bcrypt.hash(req.body.new, 10, (err, hash) => {
           if (err) {
             return res.status(500).json({
-              error: err
+              message: 'Server error when encrypted user password'
             });
           }
 
@@ -674,7 +675,7 @@ router.post('/changePassword', (req, res, next) => {
           })
           .catch(err => {
             res.status(500).json({
-              error: err
+              message: 'Server error when update user password'
             });
           });
         })
@@ -692,7 +693,7 @@ router.post('/changePassword', (req, res, next) => {
   })
   .catch(err => {
     res.status(500).json({
-      error: err
+      message: 'Server error when searching for a user by token'
     })
   });
 });
@@ -725,14 +726,14 @@ router.post('/change-basic-info', (req, res, next) => {
     })
     .catch(err => {
       res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     });
   })
   .then()
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -795,25 +796,25 @@ router.post('/confirm-reg', (req, res, next) => {
         })
         .catch(err => {
           return res.status(503).json({
-            error: err
+            message: 'Server error when created user-token'
           })
         })
       })
       .catch(err => {
         return res.status(502).json({
-          error: err
+          message: 'Server error when created new user'
         })
       })
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(501).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -838,7 +839,7 @@ router.post('/change-password', (req, res, next) => {
     bcrypt.hash(newPassword, 10, (err, hash) => {
       if (err) {
         return res.status(500).json({
-          error: err
+          message: 'Server error when encrypted user password'
         });
       }
       Aleusers.update(
@@ -847,7 +848,8 @@ router.post('/change-password', (req, res, next) => {
       )
       .exec()
       .then(result_reset_password => {
-      const mailOptions = {
+
+        const mailOptions = {
           from: 'noreply@alehub.awsapps.com',
           to: result_found[0].email,
           subject: 'Restore password',
@@ -857,24 +859,25 @@ router.post('/change-password', (req, res, next) => {
         transporter.sendMail(mailOptions, function(error, info) {
           if (error) {
             return res.status(500).json({
-              error: error
+              message: 'Server error when send email'
             })
           }
           return res.status(200).json({
             message: 'New password send to E-mail'
           });
         });
+
       })
       .catch(err => {
         res.status(500).json({
-          error: err
+          message: 'Server error when change user password'
         });
       });
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching for a user by token'
     })
   })
 });
@@ -914,7 +917,7 @@ router.post('/restore-2fa', (req, res, next) => {
           })
           .catch(err => {
             res.status(500).json({
-              error: err
+              message: 'Server error when generate qr-code'
             })
           });
         } else {
@@ -930,7 +933,7 @@ router.post('/restore-2fa', (req, res, next) => {
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching user by email'
     })
   })
 });
@@ -948,7 +951,7 @@ router.post('/new', (req, res, next) => {
     bcrypt.hash(req.body.password, 10, (err, hash) => {
       if (err) {
         return res.status(500).json({
-          error: err
+          message: 'Server error when encrypted user password'
         });
       } else {
 
@@ -970,7 +973,7 @@ router.post('/new', (req, res, next) => {
         transporter.sendMail(mailOptions, function(error, info) {
           if (error) {
             return res.status(500).json({
-              error: error
+              message: 'Server error when send email'
             })
           }
           return res.status(200).json({
@@ -982,7 +985,7 @@ router.post('/new', (req, res, next) => {
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching user by email'
     })
   })
 });
@@ -1025,7 +1028,7 @@ router.post('/login/2fa', (req, res, next) => {
           })
           .catch(err => {
             return res.status(500).json({
-              error: err
+              message: 'Server error when creating an user-token'
             })
           })
         } else {
@@ -1042,7 +1045,7 @@ router.post('/login/2fa', (req, res, next) => {
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching user by email'
     })
   })
 });
@@ -1091,13 +1094,13 @@ router.get('/get-user-data', (req, res, next) => {
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching wallets by user'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching for a user by token'
     })
   })
 });
@@ -1135,20 +1138,19 @@ router.get('/user-wallets', (req, res, next) => {
       })
       .catch(err => {
         res.status(500).json({
-          error: err
+          message: 'Server error when searching wallet an user'
         })
       });
-
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
@@ -1197,7 +1199,7 @@ router.post('/login', (req, res, next) => {
           })
           .catch(err => {
             return res.status(500).json({
-              error: err
+              message: 'Server error when creating an user-token'
             })
           })
         } else {
@@ -1210,7 +1212,7 @@ router.post('/login', (req, res, next) => {
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching user by email'
     })
   })
 });
@@ -1223,7 +1225,7 @@ router.delete('/:userId', (req, res, next) => {
   })
   .catch(err => {
     res.status(500).json({
-      error: err
+      message: 'Server error when deleting user'
     })
   });
 });
