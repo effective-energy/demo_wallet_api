@@ -20,6 +20,7 @@ var transporter = nodemailer.createTransport({
 const Aleusers = require('../models/Ale-users');
 const Aletoken = require('../models/Ale-token');
 const Alewallet = require('../models/Ale-wallets');
+const Alenotifications = require('../models/Ale-notifications');
 
 router.post('/change-name', (req, res, next) => {
   let user_token = req.headers.authorization;

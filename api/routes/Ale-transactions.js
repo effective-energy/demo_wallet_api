@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
 const Aletransactions = require('../models/Ale-transactions');
+const Alenotifications = require('../models/Ale-notifications');
 const Alewallet = require('../models/Ale-wallets');
 const Aleusers = require('../models/Ale-users');
 const Aletoken = require('../models/Ale-token');
@@ -67,6 +68,13 @@ router.get('/:walletAddress', (req, res, next) => {
 });
 
 router.post('/send', (req, res, body) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
   Alewallet.find({ address: req.body.walletAddress })
   .exec()
   .then(check => {
@@ -115,9 +123,55 @@ router.post('/send', (req, res, body) => {
                 }})
                 .exec()
                 .then(success_send_dest => {
-                  return res.status(201).json({
-                    message: 'Success send',
-                    model: success_send_dest
+
+                  let newNotifications = new Alenotifications({
+                    _id: new mongoose.Types.ObjectId(),
+                    user_id: decode_token.userId,
+                    isDeleted: false,
+                    isSubtitle: false,
+                    date: new Date().getTime(),
+                    title: `Вы **отправили** <span class="deleted">${req.body.count}</span> ALE с адреса **${req.body.walletAddress}** на адрес **${req.body.walletDestination}**`,
+                    subTitle: "",
+                    changes: []
+                  });
+
+                  newNotifications
+                  .save()
+                  .then(result_save_notifications => {
+
+                    Aleusers.find({walletsList: req.body.walletDestination})
+                    .exec()
+                    .then(result => {
+                      let foundedUsers = [];
+                      for(let i=0;i<result.length;i++) {
+                        foundedUsers.push({
+                          _id: new mongoose.Types.ObjectId(),
+                          user_id: result[i]._id,
+                          isDeleted: false,
+                          isSubtitle: false,
+                          date: new Date().getTime(),
+                          title: `Вы **получили** <span class="accepted">${req.body.count}</span> ALE от **${req.body.walletAddress}** на адрес **${req.body.walletDestination}**`,
+                          subTitle: "",
+                          changes: []
+                        })
+                      }
+                      Alenotifications.create(foundedUsers, function (err, jellybean, snickers) {
+                        return res.status(201).json({
+                          message: 'Success send',
+                          model: success_send_dest
+                        })
+                      })
+                    })
+                    .catch(err => {
+                      return res.status(500).json({
+                        error: err
+                      })
+                    })
+                  })
+                  .catch(err => {
+                    return res.status(500).json({
+                      message: 'Server error when creating notifications'
+                    })
                   })
                 })
                 .catch(err => {

@@ -165,9 +165,9 @@ router.post('/rename', (req, res, next) => {
             message: 'The user does not have such a wallet'
           })
         } else {
-          Alewallet.update({address: req.body.newWalletName}, {
-            name: req.body.walletName
-          })
+          Alewallet.update({_id: result_found_wallet[0]._id}, { '$set': {
+            name: req.body.newWalletName
+          }})
           .exec()
           .then(result_rename_wallet => {
             return res.status(200).json({
