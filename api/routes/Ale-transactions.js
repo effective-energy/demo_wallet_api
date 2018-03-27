@@ -46,7 +46,11 @@ router.get('/:walletAddress', (req, res, next) => {
           }
           foundTransactions[i].balanceInfoDest = {}
         }
-        return res.status(200).json(foundTransactions)
+
+        let sortTransactions = foundTransactions.sort(function(a,b) {
+          return new Date(b.timestamp) - new Date(a.timestamp);
+        });
+        return res.status(200).json(sortTransactions)
       })
       .catch(err => {
         res.status(500).json({
@@ -138,8 +142,7 @@ router.post('/send', (req, res, body) => {
                   newNotifications
                   .save()
                   .then(result_save_notifications => {
-
-                    Aleusers.find({walletsList: req.body.walletDestination})
+                  Aleusers.find({walletsList: req.body.walletDestination})
                     .exec()
                     .then(result => {
                       let foundedUsers = [];

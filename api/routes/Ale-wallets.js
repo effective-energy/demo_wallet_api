@@ -251,13 +251,7 @@ router.post('/addressInfo', (req, res, next) => {
   })
 });
 
-router.get('/seed', (req, res, next) => {
-  return res.status(201).json({
-    seed: bip39.generateMnemonic().split(' ')
-  })
-});
-
-router.delete('/delete/:id', (req, res, next) => {
+router.get('/getWalletInfo/:walletAddress', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
   if (decode_token.length === 0) {
@@ -281,16 +275,145 @@ router.delete('/delete/:id', (req, res, next) => {
           message: 'User not found'
         })
       }
-      Alewallet.remove({ _id: req.params.id })
+      Alewallet.find({address: req.params.walletAddress})
       .exec()
-      .then(result => {
-        res.status(200).json(result);
+      .then(result_found_wallet => {
+        if(result_found_wallet.length === 0) {
+          return res.status(200).json({
+            message: 'Wallet not found'
+          })
+        }
+
+        let foundedWallet = result_found_wallet;
+
+        let filterWallets = result_found_user[0].disabled_wallets.reduce(function(a,b) {
+          if (a.indexOf(b) < 0 ) a.push(b);
+          return a;
+        },[]);
+
+        for(let i=0;i<foundedWallet.length;i++) {
+          for(let j=0;j<filterWallets.length;j++) {
+            if(foundedWallet[i].address === filterWallets[j]) {
+              foundedWallet[i] = '';
+            }
+          }
+        }
+
+        let resultWallets = foundedWallet.filter(item => {
+          return item.length !== 0
+        })
+
+        if(resultWallets.length === 0) {
+          return res.status(200).json({
+            message: 'Wallet not found'
+          })
+        } else {
+          return res.status(200).json(resultWallets[0])
+        }
       })
       .catch(err => {
-        res.status(500).json({
-          message: 'Server error when deleting wallet'
+        return res.status(500).json({
+          message: 'Server error when searching wallets'
         })
-      });
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        message: 'Server error when searching for a user by token'
+      })
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({
+      message: 'Server error when searching token'
+    })
+  })
+});
+
+router.get('/seed', (req, res, next) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
+  .exec()
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
+      })
+    }
+    Aleusers.find({_id: decode_token.userId})
+    .exec()
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      return res.status(201).json({
+        seed: bip39.generateMnemonic().split(' ')
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        message: 'Server error when searching for a user by token'
+      })
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({
+      message: 'Server error when searching token'
+    })
+  })
+});
+
+router.delete('/:address', (req, res, next) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
+  .exec()
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
+      })
+    }
+    Aleusers.find({_id: decode_token.userId})
+    .exec()
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      if(result_found_user[0].walletsList.indexOf(req.params.address) === -1) {
+        return res.status(200).json({
+          message: 'This wallet does not belong to the user found'
+        })
+      }
+      Aleusers.update({ _id: decode_token.userId }, {
+        $push: { disabled_wallets: req.params.address }
+      })
+      .exec()
+      .then(result_delete => {
+        return res.status(200).json({
+          message: 'Wallet successfully disabled by this user'
+        })
+      })
+      .catch(err => {
+        return res.status(500).json({
+          message: 'Server error when deleted wallet'
+        })
+      })
     })
     .catch(err => {
       return res.status(500).json({
@@ -350,7 +473,7 @@ router.post('/redeem', (req, res, next) => {
           })
         })
       } else {
-        return res.status(500).json({
+        return res.status(200).json({
           message: 'Incorrect mnemonic!'
         })
       }

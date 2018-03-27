@@ -144,7 +144,6 @@ router.post('/recovery', (req, res, next) => {
       { change_token: salt }
     )
     .then(result_update_token => {
-
       const mailOptions = {
         from: 'noreply@alehub.awsapps.com',
         to: req.body.email,
@@ -773,7 +772,8 @@ router.post('/confirm-reg', (req, res, next) => {
         rating: -1,
         competence: [],
         change_token: "",
-        email_token: ""
+        email_token: "",
+        disabled_wallets: []
       });
       newAleUser.save()
       .then(result_save_user => {
@@ -1018,7 +1018,6 @@ router.post('/login/2fa', (req, res, next) => {
             _id: new mongoose.Types.ObjectId(),
             user_token: token
           });
-
           newUserToken.save()
           .then(result_save_token => {
             return res.status(200).json({
@@ -1070,17 +1069,38 @@ router.get('/get-user-data', (req, res, next) => {
     Alewallet.find({address: result_found[0].walletsList})
     .exec()
     .then(result_found_wallets => {
-      if(result_found_wallets.length === 0) {
+
+      let foundedWallet = result_found_wallets;
+
+      let filterWallets = result_found[0].disabled_wallets.reduce(function(a,b) {
+        if (a.indexOf(b) < 0 ) a.push(b);
+        return a;
+      },[]);
+
+      for(let i=0;i<foundedWallet.length;i++) {
+        for(let j=0;j<filterWallets.length;j++) {
+          if(foundedWallet[i].address === filterWallets[j]) {
+            foundedWallet[i] = '';
+          }
+        }
+      }
+
+      let resultWallets = foundedWallet.filter(item => {
+        return item.length !== 0
+      })
+        
+      if(resultWallets.length === 0) {
         return res.status(200).json({
           message: 'User is found',
           name: result_found[0].name,
           email: result_found[0].email,
           isTwoAuth: result_found[0].isTwoAuth,
-          walletsList: result_found[0].walletsList,
+          walletsList: resultWallets,
           haveTransactions: false
         })
       } else {
-        let sumTransaction = result_found_wallets.reduce((total, amount) => total.total_transactions + amount.total_transactions);
+
+        let sumTransaction = resultWallets.reduce((total, amount) => total.total_transactions + amount.total_transactions);
         let totalCountTransactions = false;
         if(sumTransaction !== 0) totalCountTransactions = true;
         return res.status(200).json({
@@ -1134,8 +1154,24 @@ router.get('/user-wallets', (req, res, next) => {
       .exec()
       .then(result_found => {
         let foundedWallet = result_found.filter(wallet => result_found_user[0].walletsList.includes(wallet.address));
-        //foundedWallet.forEach(function(v) { delete v.seed, delete v._id });
-        return res.status(200).json(foundedWallet);
+
+        let filterWallets = result_found_user[0].disabled_wallets.reduce(function(a,b) {
+          if (a.indexOf(b) < 0 ) a.push(b);
+          return a;
+        },[]);
+
+        for(let i=0;i<foundedWallet.length;i++) {
+          for(let j=0;j<filterWallets.length;j++) {
+            if(foundedWallet[i].address === filterWallets[j]) {
+              foundedWallet[i] = '';
+            }
+          }
+        }
+
+        let resultWallets = foundedWallet.filter(item => {
+          return item.length !== 0
+        })
+      return res.status(200).json(resultWallets);
       })
       .catch(err => {
         res.status(500).json({
