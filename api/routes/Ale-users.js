@@ -238,7 +238,7 @@ router.delete('/logout', (req, res, next) => {
           message: 'User not found'
         })
       }
-      Aletoken.delete({user_token: req.body.token})
+      Aletoken.delete({user_token: user_token})
       .exec()
       .then(result_delete_token => {
         return res.status(200).json({
