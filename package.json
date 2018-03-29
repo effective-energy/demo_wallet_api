@@ -7,6 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/effective-energy/demo_wallet_api.git"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
