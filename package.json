@@ -7,13 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://voroncv@bitbucket.org/llccrowdsystems/protocol.git"
-  },
   "author": "",
   "license": "ISC",
-  "homepage": "https://bitbucket.org/llccrowdsystems/protocol#readme",
   "dependencies": {
     "bcrypt": "^1.0.3",
     "bip39": "^2.5.0",
