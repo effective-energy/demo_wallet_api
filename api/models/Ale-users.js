@@ -37,15 +37,15 @@ const aleUsersSchema = mongoose.Schema({
   },
   change_token: {
     type: String,
-    required: false,
+    required: false
   },
   email_token: {
     type: String,
-    required: false,
+    required: false
   },
   disabled_wallets: {
     type: Array,
-    required: true
+    required: false
   },
   __v: {
     type: Number,
