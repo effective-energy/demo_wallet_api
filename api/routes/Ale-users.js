@@ -882,69 +882,50 @@ router.post('/confirm-reg', (req, res, next) => {
         message: 'User already exist'
       })
     }
-    Aletoken.find({user_token: req.body.token})
-    .exec()
-    .then(result_found_token => {
-      if(result_found_token.length !== 0) {
-        return res.status(500).json({
-          message: 'Token already exist'
-        })
-      }
-      const newAleUser = new Aleusers({
+    const newAleUser = new Aleusers({
+      _id: new mongoose.Types.ObjectId(),
+      name: confirm_token.name,
+      email: confirm_token.email,
+      password: confirm_token.password,
+      isTwoAuth: false,
+      twoAuthRecovery: "",
+      walletsList: [],
+      rating: -1,
+      competence: [],
+      change_token: "",
+      email_token: "",
+      disabled_wallets: []
+    });
+    newAleUser.save()
+    .then(result_save_user => {
+      const newAleToken = new Aletoken({
         _id: new mongoose.Types.ObjectId(),
-        name: confirm_token.name,
-        email: confirm_token.email,
-        password: confirm_token.password,
-        isTwoAuth: false,
-        twoAuthRecovery: "",
-        walletsList: [],
-        rating: -1,
-        competence: [],
-        change_token: "",
-        email_token: "",
-        disabled_wallets: []
+        user_token: jwt.sign({
+          email: result_save_user.email,
+          userId: result_save_user._id
+        }, process.env.JWT_KEY, {
+          expiresIn: "30d"
+        })
       });
-      newAleUser.save()
-      .then(result_save_user => {
-        const newAleToken = new Aletoken({
-          _id: new mongoose.Types.ObjectId(),
-          user_token: jwt.sign({
-            email: result_save_user.email,
-            userId: result_save_user._id
-          }, process.env.JWT_KEY, {
-            expiresIn: "30d"
-          })
-        });
 
-        newAleToken.save()
-        .then(result_save_token => {
-          return res.status(200).json({
-            message: 'User created!',
-            user_token: newAleToken.user_token,
-            user_id: result_save_user._id
-          });
-        })
-        .catch(err => {
-          return res.status(503).json({
-            message: 'Server error when created user-token'
-          })
-        })
+      newAleToken.save()
+      .then(result_save_token => {
+        return res.status(200).json({
+          message: 'User created!',
+          user_token: newAleToken.user_token,
+          user_id: result_save_user._id
+        });
       })
       .catch(err => {
-        return res.status(502).json({
-          message: 'Server error when created new user'
+        return res.status(503).json({
+          message: 'Server error when created user-token'
         })
       })
     })
     .catch(err => {
-      return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+      return res.status(502).json({
+        message: 'Server error when created new user'
       })
-    })
-  })
-  .catch(err => {
-    return res.status(501).json({
-      message: 'Server error when searching token'
     })
   })
 });
