@@ -1398,7 +1398,7 @@ router.post('/login', (req, res, next) => {
       })
     }
     bcrypt.compare(req.body.password, result_found[0].password, (err, result) => {
-      if (err) {
+      if(!result) {
         return res.status(401).json({
           message: 'Incorrect password'
         });
