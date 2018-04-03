@@ -1397,51 +1397,52 @@ router.post('/login', (req, res, next) => {
         message: 'User not found'
       })
     }
-    if (result_found[0].isTwoAuth) {
-      return res.status(200).json({
-        statusLogin: 200,
-        message: 'Authorization was successful. Enter the two-factor code.'
-      })
-    } else {
-      bcrypt.compare(req.body.password, result_found[0].password, (err, result) => {
-        if (err) {
-          return res.status(401).json({
-            message: 'Incorrect password'
-          });
-        }
-        if (result) {
-          const token = jwt.sign({
-            email: result_found[0].email,
-            userId: result_found[0]._id
-          }, process.env.JWT_KEY, {
-            expiresIn: "30d"
-          });
+    bcrypt.compare(req.body.password, result_found[0].password, (err, result) => {
+      if (err) {
+        return res.status(401).json({
+          message: 'Incorrect password'
+        });
+      }
 
-          const newUserToken = new Aletoken({
-            _id: new mongoose.Types.ObjectId(),
-            user_token: token
+      if (result_found[0].isTwoAuth) {
+        return res.status(200).json({
+          statusLogin: 200,
+          message: 'Authorization was successful. Enter the two-factor code.'
+        })
+      }
+
+      if (result) {
+        const token = jwt.sign({
+          email: result_found[0].email,
+          userId: result_found[0]._id
+        }, process.env.JWT_KEY, {
+          expiresIn: "30d"
+        });
+
+        const newUserToken = new Aletoken({
+          _id: new mongoose.Types.ObjectId(),
+          user_token: token
+        });
+        newUserToken
+        .save()
+        .then(result_save_token => {
+          return res.status(200).json({
+            message: 'Auth success',
+            user_token: token,
+            twoAuthRecovery_status: result_found[0].isTwoAuth
           });
-          newUserToken
-          .save()
-          .then(result_save_token => {
-            return res.status(200).json({
-              message: 'Auth success',
-              user_token: token,
-              twoAuthRecovery_status: result_found[0].isTwoAuth
-            });
+        })
+        .catch(err => {
+          return res.status(500).json({
+            message: 'Server error when creating an user-token'
           })
-          .catch(err => {
-            return res.status(500).json({
-              message: 'Server error when creating an user-token'
-            })
-          })
-        } else {
-          return res.status(401).json({
-            message: 'Auth failed'
-          });
-        }
-      })
-    }
+        })
+      } else {
+        return res.status(401).json({
+          message: 'Auth failed'
+        });
+      }
+    })
   })
   .catch(err => {
     return res.status(500).json({
