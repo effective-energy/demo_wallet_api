@@ -458,9 +458,26 @@ router.post('/redeem', (req, res, next) => {
         .exec()
         .then(result => {
           if(result.length !== 0) {
-            return res.status(201).json({
-              walletInfo: result[0]
-            })
+            if(result_found_user[0].disabled_wallets.indexOf(result[0].address) !== -1) {
+              Aleusers.update({ _id: result_found_user[0]._id }, {
+                $pull: { disabled_wallets: result[0].address }
+              })
+              .exec()
+              .then(result_update => {
+                return res.status(200).json({
+                  walletInfo: result[0]
+                })
+              })
+              .catch(err => {
+                return res.status(500).json({
+                  message: 'Server error when remove disabled wallets from list'
+                })
+              })
+            } else {
+              return res.status(200).json({
+                walletInfo: result[0]
+              })
+            }
           } else {
             return res.status(404).json({
               message: 'Wallet not found'
