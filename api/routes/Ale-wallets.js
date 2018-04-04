@@ -475,7 +475,7 @@ router.post('/import-wallet', (req, res, next) => {
               })
             } else {
               return res.status(200).json({
-                walletInfo: result[0]
+                message: 'Wallet is already active for this user'
               })
             }
           } else {
