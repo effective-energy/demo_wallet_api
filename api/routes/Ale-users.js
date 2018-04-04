@@ -7,6 +7,8 @@ const nodemailer = require('nodemailer');
 const speakeasy = require('speakeasy');
 const randomstring = require('randomstring');
 
+const frontUrl = 'http://localhost:8080/#';
+
 var transporter = nodemailer.createTransport({
   host: '',
   port: '',
@@ -171,7 +173,7 @@ router.post('/recovery', (req, res, next) => {
                           </tr>
                           <tr>
                             <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                              Your link to recovery your account - http://localhost:8080/#/recover-confirm/${generrateRecoveryLink}. The link is valid for 30 days.
+                              Your link to recovery your account - <a style="color: #fff;" href="${frontUrl}/recover-confirm/${generrateRecoveryLink}">${frontUrl}/recover-confirm/${generrateRecoveryLink}</a>.<br /> The link is valid for 30 days.
                             </td>
                           </tr>
                         </table>
@@ -752,7 +754,7 @@ router.post('/change-email', (req, res, next) => {
                               </tr>
                               <tr>
                                 <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                                  To change email, follow the link - http://localhost:8080/#/confirmation-change-email/${confirmToken}. The link is valid for 30 days.
+                                  To change email, follow the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${confirmToken}">${frontUrl}/confirmation-change-email/${confirmToken}</a>. <br /> The link is valid for 30 days.
                                 </td>
                               </tr>
                             </table>
@@ -806,7 +808,7 @@ router.post('/change-email', (req, res, next) => {
                                 </tr>
                                 <tr>
                                   <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                                    Someone requested a change of mail for your account. If this is not done by you, go for the link - http://localhost:8080/#/confirmation-change-email/${cancelToken}. The link is valid for 30 days.
+                                    Someone requested a change of mail for your account. If this is not done by you, go for the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${cancelToken}">${frontUrl}/confirmation-change-email/${cancelToken}</a>. <br /> The link is valid for 30 days.
                                   </td>
                                 </tr>
                               </table>
@@ -1097,7 +1099,7 @@ router.post('/change-password', (req, res, next) => {
                             </tr>
                             <tr>
                               <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                                New password - ${newPassword}
+                                New password - <span style="color: #fff;">${newPassword}</span>
                               </td>
                             </tr>
                           </table>
@@ -1254,7 +1256,7 @@ router.post('/new', (req, res, next) => {
                             </tr>
                             <tr>
                               <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                                To complete the registration, click the link - http://localhost:8081/#/registration/confirmationuser/${confirmLink}. The link is valid for 30 days.
+                                To complete the registration, click the link - <a style="color: #fff;" href="${frontUrl}/registration/confirmationuser/${confirmLink}">${frontUrl}/registration/confirmationuser/${confirmLink}</a>. <br /> The link is valid for 30 days.
                               </td>
                             </tr>
                           </table>
