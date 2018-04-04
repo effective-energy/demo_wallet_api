@@ -134,7 +134,7 @@ router.post('/send', (req, res, body) => {
                     isDeleted: false,
                     isSubtitle: false,
                     date: new Date().getTime(),
-                    title: `Вы **отправили** <span class="deleted">${req.body.count}</span> ALE с адреса **${req.body.walletAddress}** на адрес **${req.body.walletDestination}**`,
+                    title: `You **sent** <span class="deleted">${req.body.count}</span> ALE from the address **${req.body.walletAddress}** to the address **${req.body.walletDestination}**`,
                     subTitle: "",
                     changes: []
                   });
@@ -153,7 +153,7 @@ router.post('/send', (req, res, body) => {
                           isDeleted: false,
                           isSubtitle: false,
                           date: new Date().getTime(),
-                          title: `Вы **получили** <span class="accepted">${req.body.count}</span> ALE от **${req.body.walletAddress}** на адрес **${req.body.walletDestination}**`,
+                          title: `You **received** <span class="accepted">${req.body.count}</span> ALE from **${req.body.walletAddress}** to the address **${req.body.walletDestination}**`,
                           subTitle: "",
                           changes: []
                         })
