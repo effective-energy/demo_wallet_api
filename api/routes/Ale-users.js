@@ -599,11 +599,32 @@ router.post('/confirm-change-email', (req, res, next) => {
             });
             newUserToken.save()
             .then(result_save_token => {
-              return res.status(200).json({
-                message: 'Success change email',
-                user_token: userToken,
-                user_email: decode_token.email
+
+              let newNotifications = new Alenotifications({
+                _id: new mongoose.Types.ObjectId(),
+                user_id: user_token.userId,
+                isDeleted: false,
+                isSubtitle: false,
+                date: new Date().getTime(),
+                title: `You **change** email from <span class="deleted">${decode_token.oldEmail}</span> to **${decode_token.email}**`,
+                subTitle: "",
+                changes: []
               });
+
+              newNotifications
+              .save()
+              .then(result_create_notifications => {
+                return res.status(200).json({
+                  message: 'Success change email',
+                  user_token: userToken,
+                  user_email: decode_token.email
+                });
+              })
+              .catch(err => {
+                return res.status(500).json({
+                  message: 'Server error when creating notifications'
+                })
+              })
             })
             .catch(err => {
               return res.status(500).json({
