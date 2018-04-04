@@ -618,7 +618,7 @@ router.post('/confirm-change-email', (req, res, next) => {
         })
         .catch(err => {
           return res.status(500).json({
-            error: err
+            message: 'Server error when deleted old user token'
           })
         })
       } else {
@@ -634,20 +634,20 @@ router.post('/confirm-change-email', (req, res, next) => {
         })
         .catch(err => {
           return res.status(500).json({
-            error: err
+          message: 'Server error when change user data'
           })
         })
       }
     })
     .catch(err => {
       return res.status(500).json({
-        error: err
+        message: 'Server error when searching for a user by token'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      error: err
+      message: 'Server error when searching token'
     })
   })
 });
