@@ -428,7 +428,7 @@ router.delete('/:address', (req, res, next) => {
   })
 });
 
-router.post('/redeem', (req, res, next) => {
+router.post('/import-wallet', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
   if (decode_token.length === 0) {

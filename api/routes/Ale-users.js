@@ -545,11 +545,114 @@ router.post('/disable-two-auth', (req, res, next) => {
 });
 
 router.post('/confirm-change-email', (req, res, next) => {
-  let decode_token = jwt.verify(confirmToken, process.env.JWT_KEY);
-  return res.status(200).json(decode_token);
+  let decode_token = jwt.verify(req.body.confirmToken, process.env.JWT_KEY);
+  let user_token = jwt.verify(req.headers.authorization, process.env.JWT_KEY);
+  if (decode_token.length === 0 || user_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token or confirm token not sent'
+    })
+  }
+  Aletoken.find({user_token: req.headers.authorization})
+  .exec()
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
+      })
+    }
+    Aleusers.find({email: decode_token.oldEmail})
+    .exec()
+    .then(result => {
+      if(result.length === 0) {
+        return res.status(200).json({
+          message: 'User not found'
+        })
+      }
+      if(result[0].email_token !== decode_token.token) {
+        return res.status(200).json({
+          message: 'Invalid token'
+        })
+      }
+      if(decode_token.isChange) {
+        Aleusers.update({ _id: decode_token.userId }, { '$set': {
+          email_token: "",
+          email: decode_token.email
+        }})
+        .exec()
+        .then(result_change_email => {
+          Aletoken.remove({user_token: req.headers.authorization})
+          .exec()
+          .then(result_delete_token => {
+
+            const userToken = jwt.sign({
+              email: decode_token.email,
+              userId: result[0]._id
+            }, process.env.JWT_KEY, {
+              expiresIn: "30d"
+            });
+
+            const newUserToken = new Aletoken({
+              _id: new mongoose.Types.ObjectId(),
+              user_token: userToken
+            });
+            newUserToken.save()
+            .then(result_save_token => {
+              return res.status(200).json({
+                message: 'Success change email',
+                user_token: userToken,
+                user_email: decode_token.email
+              });
+            })
+            .catch(err => {
+              return res.status(500).json({
+                message: 'Server error when creating an user-token'
+              })
+            })
+
+          })
+          .catch(err => {
+            return res.status(500).json({
+              message: 'Server error when deleted user-token'
+            })
+          })
+        })
+        .catch(err => {
+          return res.status(500).json({
+            error: err
+          })
+        })
+      } else {
+        Aleusers.update(
+          { _id: decode_token.userId },
+          { email_token: "" }
+        )
+        .exec()
+        .then(result_cancel_change_email => {
+          return res.status(200).json({
+            message: 'Cancellation of mail changes was successful'
+          })
+        })
+        .catch(err => {
+          return res.status(500).json({
+            error: err
+          })
+        })
+      }
+    })
+    .catch(err => {
+      return res.status(500).json({
+        error: err
+      })
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({
+      error: err
+    })
+  })
 });
 
-router.post('/changeEmail', (req, res, next) => {
+router.post('/change-email', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
   if (decode_token.length === 0) {
@@ -596,7 +699,8 @@ router.post('/changeEmail', (req, res, next) => {
           userId: decode_token.userId,
           salt: randomstring.generate(16),
           token: emailToken,
-          isChange: true
+          isChange: true,
+          oldEmail: result_found_user[0].email
         }, process.env.JWT_KEY, {
           expiresIn: "30d"
         });
@@ -606,7 +710,8 @@ router.post('/changeEmail', (req, res, next) => {
           userId: decode_token.userId,
           salt: randomstring.generate(16),
           token: emailToken,
-          isChange: false
+          isChange: false,
+          oldEmail: result_found_user[0].email
         }, process.env.JWT_KEY, {
           expiresIn: "30d"
         });
@@ -617,7 +722,7 @@ router.post('/changeEmail', (req, res, next) => {
         .then(result_update_email_token => {
           transporter.sendMail({
             from: 'demo.alehub@gmail.com',
-            to: result_found_user[0].email,
+            to: req.body.email,
             subject: 'Confirm mail change',
             html: `
               <table align="center" cellpadding="0" cellspacing="0" width="600">
@@ -642,7 +747,7 @@ router.post('/changeEmail', (req, res, next) => {
                               </tr>
                               <tr>
                                 <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                                  To change email, follow the link - ${confirmToken}. The link is valid for 30 days.
+                                  To change email, follow the link - http://localhost:8080/#/confirmation-change-email/${confirmToken}. The link is valid for 30 days.
                                 </td>
                               </tr>
                             </table>
@@ -671,7 +776,7 @@ router.post('/changeEmail', (req, res, next) => {
             }
             transporter.sendMail({
               from: 'demo.alehub@gmail.com',
-              to: req.body.email,
+              to: result_found_user[0].email,
               subject: 'Confirm mail change',
               html: `
                 <table align="center" cellpadding="0" cellspacing="0" width="600">
@@ -696,7 +801,7 @@ router.post('/changeEmail', (req, res, next) => {
                                 </tr>
                                 <tr>
                                   <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                                    Someone requested a change of mail for your account. If this is not done by you, go for the link - ${cancelToken}. The link is valid for 30 days.
+                                    Someone requested a change of mail for your account. If this is not done by you, go for the link - http://localhost:8080/#/confirmation-change-email/${cancelToken}. The link is valid for 30 days.
                                   </td>
                                 </tr>
                               </table>
