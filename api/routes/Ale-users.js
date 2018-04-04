@@ -676,6 +676,11 @@ router.post('/change-email', (req, res, next) => {
           message: 'User not found'
         })
       }
+      if(result_found_user[0].isTwoAuth !== true) {
+        return res.status(200).json({
+          message: 'Enable Two auth'
+        })
+      }
       Aleusers.find({email: req.body.email})
       .exec()
       .then(result_check_exist_email => {
