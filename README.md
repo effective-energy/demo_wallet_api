@@ -1,5 +1,5 @@
 # Ale demo wallet API
-JS Backend for demo wallet alehub
+JavaScript Backend for demo alehub client
 
 # Clone
 ```
@@ -24,4 +24,4 @@ $ curl http://localhost:4000
 ```
 
 # Important
-You need change SMTP-congig on /api/routes/Ale-users.js file for correct operation
+You need change SMTP-config on /api/routes/Ale-users.js file for correct operation
