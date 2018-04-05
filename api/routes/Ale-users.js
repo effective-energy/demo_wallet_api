@@ -151,48 +151,50 @@ router.post('/recovery', (req, res, next) => {
         to: req.body.email,
         subject: 'Recovery password',
         html: `
-          <table align="center" cellpadding="0" cellspacing="0" width="600">
-            <tbody>
-              <tr>
-                <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                  <h1 style="font-family: Tahoma;font-weight: 500;">
-                    <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
-                  </h1>
-                </td>
-              </tr>
-              <tr>
-                <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
-                  <table cellpadding="0" cellspacing="0" width="100%">
-                    <tr>
-                      <td width="540" valign="top">
-                        <table cellpadding="0" cellspacing="0" width="100%">
-                          <tr style="text-align: center;font-family: Tahoma;">
-                            <td>
-                              <h1 style="font-weight: 500;">Confirmation of registration</h1>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                              Your link to recovery your account - <a style="color: #fff;" href="${frontUrl}/recover-confirm/${generrateRecoveryLink}">${frontUrl}/recover-confirm/${generrateRecoveryLink}</a>.<br /> The link is valid for 30 days.
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-              <tr>
-                <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
-                  <table cellpadding="0" cellspacing="0" width="100%">
-                    <tr>
-                      <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <center style="width: 100%;">
+            <table align="center" cellpadding="0" cellspacing="0" width="600">
+              <tbody>
+                <tr>
+                  <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
+                    <h1 style="font-family: Tahoma;font-weight: 500;">
+                      <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
+                    </h1>
+                  </td>
+                </tr>
+                <tr>
+                  <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td width="540" valign="top">
+                          <table cellpadding="0" cellspacing="0" width="100%">
+                            <tr style="text-align: center;font-family: Tahoma;">
+                              <td>
+                                <h1 style="font-weight: 500;">Confirmation of registration</h1>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 25px 0 0 0;font-family: Tahoma;max-width: 600px;">
+                                Your link to recovery your account - <a style="color: #fff;" href="${frontUrl}/recover-confirm/${generrateRecoveryLink}">${frontUrl}/recover-confirm/${generrateRecoveryLink}</a>.<br /> The link is valid for 30 days.
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </center>
         `
       };
 
@@ -753,60 +755,7 @@ router.post('/change-email', (req, res, next) => {
             to: req.body.email,
             subject: 'Confirm mail change',
             html: `
-              <table align="center" cellpadding="0" cellspacing="0" width="600">
-                <tbody>
-                  <tr>
-                    <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                      <h1 style="font-family: Tahoma;font-weight: 500;">
-                        <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
-                      </h1>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
-                      <table cellpadding="0" cellspacing="0" width="100%">
-                        <tr>
-                          <td width="540" valign="top">
-                            <table cellpadding="0" cellspacing="0" width="100%">
-                              <tr style="text-align: center;font-family: Tahoma;">
-                                <td>
-                                  <h1 style="font-weight: 500;">Confirmation of registration</h1>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                                  To change email, follow the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${confirmToken}">${frontUrl}/confirmation-change-email/${confirmToken}</a>. <br /> The link is valid for 30 days.
-                                </td>
-                              </tr>
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
-                      <table cellpadding="0" cellspacing="0" width="100%">
-                        <tr>
-                          <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            `
-          }, function(error, info) {
-            if (error) {
-              return res.status(500).json({
-                message: 'Server error when send email'
-              })
-            }
-            transporter.sendMail({
-              from: 'demo.alehub@gmail.com',
-              to: result_found_user[0].email,
-              subject: 'Confirm mail change',
-              html: `
+              <center style="width: 100%;">
                 <table align="center" cellpadding="0" cellspacing="0" width="600">
                   <tbody>
                     <tr>
@@ -828,8 +777,8 @@ router.post('/change-email', (req, res, next) => {
                                   </td>
                                 </tr>
                                 <tr>
-                                  <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                                    Someone requested a change of mail for your account. If this is not done by you, go for the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${cancelToken}">${frontUrl}/confirmation-change-email/${cancelToken}</a>. <br /> The link is valid for 30 days.
+                                  <td style="padding: 25px 0 0 0;font-family: Tahoma;max-width: 600px;">
+                                    To change email, follow the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${confirmToken}">${frontUrl}/confirmation-change-email/${confirmToken}</a>. <br /> The link is valid for 30 days.
                                   </td>
                                 </tr>
                               </table>
@@ -849,6 +798,63 @@ router.post('/change-email', (req, res, next) => {
                     </tr>
                   </tbody>
                 </table>
+              </center>
+            `
+          }, function(error, info) {
+            if (error) {
+              return res.status(500).json({
+                message: 'Server error when send email'
+              })
+            }
+            transporter.sendMail({
+              from: 'demo.alehub@gmail.com',
+              to: result_found_user[0].email,
+              subject: 'Confirm mail change',
+              html: `
+                <center style="width: 100%;">
+                  <table align="center" cellpadding="0" cellspacing="0" width="600">
+                    <tbody>
+                      <tr>
+                        <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
+                          <h1 style="font-family: Tahoma;font-weight: 500;">
+                            <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
+                          </h1>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
+                          <table cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                              <td width="540" valign="top">
+                                <table cellpadding="0" cellspacing="0" width="100%">
+                                  <tr style="text-align: center;font-family: Tahoma;">
+                                    <td>
+                                      <h1 style="font-weight: 500;">Confirmation of registration</h1>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding: 25px 0 0 0;font-family: Tahoma;max-width: 600px;">
+                                      Someone requested a change of mail for your account. If this is not done by you, go for the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${cancelToken}">${frontUrl}/confirmation-change-email/${cancelToken}</a>. <br /> The link is valid for 30 days.
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
+                          <table cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                              <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </center>
               `
             }, function(error, info) {
               if (error) {
@@ -1098,48 +1104,50 @@ router.post('/change-password', (req, res, next) => {
           to: result_found[0].email,
           subject: 'Restore password',
           html: `
-            <table align="center" cellpadding="0" cellspacing="0" width="600">
-              <tbody>
-                <tr>
-                  <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                    <h1 style="font-family: Tahoma;font-weight: 500;">
-                      <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
-                    </h1>
-                  </td>
-                </tr>
-                <tr>
-                  <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td width="540" valign="top">
-                          <table cellpadding="0" cellspacing="0" width="100%">
-                            <tr style="text-align: center;font-family: Tahoma;">
-                              <td>
-                                <h1 style="font-weight: 500;">Confirmation of registration</h1>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                                New password - <span style="color: #fff;">${newPassword}</span>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <center style="width: 100%;">
+              <table align="center" cellpadding="0" cellspacing="0" width="600">
+                <tbody>
+                  <tr>
+                    <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
+                      <h1 style="font-family: Tahoma;font-weight: 500;">
+                        <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
+                      </h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td width="540" valign="top">
+                            <table cellpadding="0" cellspacing="0" width="100%">
+                              <tr style="text-align: center;font-family: Tahoma;">
+                                <td>
+                                  <h1 style="font-weight: 500;">Confirmation of registration</h1>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 25px 0 0 0;font-family: Tahoma;max-width: 600px;">
+                                  New password - <span style="color: #fff;">${newPassword}</span>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </center>
           `
         };
 
@@ -1255,48 +1263,50 @@ router.post('/new', (req, res, next) => {
           to: req.body.email,
           subject: 'Confirmation register',
           html: `
-            <table align="center" cellpadding="0" cellspacing="0" width="600">
-              <tbody>
-                <tr>
-                  <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                    <h1 style="font-family: Tahoma;font-weight: 500;">
-                      <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
-                    </h1>
-                  </td>
-                </tr>
-                <tr>
-                  <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td width="540" valign="top">
-                          <table cellpadding="0" cellspacing="0" width="100%">
-                            <tr style="text-align: center;font-family: Tahoma;">
-                              <td>
-                                <h1 style="font-weight: 500;">Confirmation of registration</h1>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 25px 0 0 0;font-family: Tahoma;">
-                                To complete the registration, click the link - <a style="color: #fff;" href="${frontUrl}/registration/confirmationuser/${confirmLink}">${frontUrl}/registration/confirmationuser/${confirmLink}</a>. <br /> The link is valid for 30 days.
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
-                    <table cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <center style="width: 100%;">
+              <table align="center" cellpadding="0" cellspacing="0" width="600">
+                <tbody>
+                  <tr>
+                    <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
+                      <h1 style="font-family: Tahoma;font-weight: 500;">
+                        <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
+                      </h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td width="540" valign="top">
+                            <table cellpadding="0" cellspacing="0" width="100%">
+                              <tr style="text-align: center;font-family: Tahoma;">
+                                <td>
+                                  <h1 style="font-weight: 500;">Confirmation of registration</h1>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 25px 0 0 0;font-family: Tahoma;max-width: 600px;">
+                                  To complete the registration, click the link - <a style="color: #fff;" href="${frontUrl}/registration/confirmationuser/${confirmLink}">${frontUrl}/registration/confirmationuser/${confirmLink}</a>. <br /> The link is valid for 30 days.
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </center>
           `
         };
 
