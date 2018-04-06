@@ -156,7 +156,7 @@ router.post('/recovery', (req, res, next) => {
               <tbody>
                 <tr>
                   <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                    <h1 style="font-family: Tahoma;font-weight: 500;">
+                    <h1 style="font-family: Tahoma, sans-serif;font-weight: 500;">
                       <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
                     </h1>
                   </td>
@@ -167,13 +167,13 @@ router.post('/recovery', (req, res, next) => {
                       <tr>
                         <td width="540" valign="top">
                           <table cellpadding="0" cellspacing="0" width="100%">
-                            <tr style="text-align: center;font-family: Tahoma;">
+                            <tr style="text-align: center;font-family: Tahoma, sans-serif;">
                               <td>
                                 <h1 style="font-weight: 500;">Confirmation of registration</h1>
                               </td>
                             </tr>
                             <tr>
-                              <td style="padding: 25px 0 0 0;font-family: Tahoma;max-width: 600px;">
+                              <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
                                 Your link to recovery your account - <a style="color: #fff;" href="${frontUrl}/recover-confirm/${generrateRecoveryLink}">${frontUrl}/recover-confirm/${generrateRecoveryLink}</a>.<br /> The link is valid for 30 days.
                               </td>
                             </tr>
@@ -760,7 +760,7 @@ router.post('/change-email', (req, res, next) => {
                   <tbody>
                     <tr>
                       <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                        <h1 style="font-family: Tahoma;font-weight: 500;">
+                        <h1 style="font-family: Tahoma, sans-serif;font-weight: 500;">
                           <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
                         </h1>
                       </td>
@@ -771,13 +771,13 @@ router.post('/change-email', (req, res, next) => {
                           <tr>
                             <td width="540" valign="top">
                               <table cellpadding="0" cellspacing="0" width="100%">
-                                <tr style="text-align: center;font-family: Tahoma;">
+                                <tr style="text-align: center;font-family: Tahoma, sans-serif;">
                                   <td>
                                     <h1 style="font-weight: 500;">Confirmation of registration</h1>
                                   </td>
                                 </tr>
                                 <tr>
-                                  <td style="padding: 25px 0 0 0;font-family: Tahoma;max-width: 600px;">
+                                  <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
                                     To change email, follow the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${confirmToken}">${frontUrl}/confirmation-change-email/${confirmToken}</a>. <br /> The link is valid for 30 days.
                                   </td>
                                 </tr>
@@ -816,7 +816,7 @@ router.post('/change-email', (req, res, next) => {
                     <tbody>
                       <tr>
                         <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                          <h1 style="font-family: Tahoma;font-weight: 500;">
+                          <h1 style="font-family: Tahoma, sans-serif;font-weight: 500;">
                             <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
                           </h1>
                         </td>
@@ -827,13 +827,13 @@ router.post('/change-email', (req, res, next) => {
                             <tr>
                               <td width="540" valign="top">
                                 <table cellpadding="0" cellspacing="0" width="100%">
-                                  <tr style="text-align: center;font-family: Tahoma;">
+                                  <tr style="text-align: center;font-family: Tahoma, sans-serif;">
                                     <td>
                                       <h1 style="font-weight: 500;">Confirmation of registration</h1>
                                     </td>
                                   </tr>
                                   <tr>
-                                    <td style="padding: 25px 0 0 0;font-family: Tahoma;max-width: 600px;">
+                                    <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
                                       Someone requested a change of mail for your account. If this is not done by you, go for the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${cancelToken}">${frontUrl}/confirmation-change-email/${cancelToken}</a>. <br /> The link is valid for 30 days.
                                     </td>
                                   </tr>
@@ -1109,7 +1109,7 @@ router.post('/change-password', (req, res, next) => {
                 <tbody>
                   <tr>
                     <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                      <h1 style="font-family: Tahoma;font-weight: 500;">
+                      <h1 style="font-family: Tahoma, sans-serif;font-weight: 500;">
                         <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
                       </h1>
                     </td>
@@ -1120,13 +1120,13 @@ router.post('/change-password', (req, res, next) => {
                         <tr>
                           <td width="540" valign="top">
                             <table cellpadding="0" cellspacing="0" width="100%">
-                              <tr style="text-align: center;font-family: Tahoma;">
+                              <tr style="text-align: center;font-family: Tahoma, sans-serif;">
                                 <td>
                                   <h1 style="font-weight: 500;">Confirmation of registration</h1>
                                 </td>
                               </tr>
                               <tr>
-                                <td style="padding: 25px 0 0 0;font-family: Tahoma;max-width: 600px;">
+                                <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
                                   New password - <span style="color: #fff;">${newPassword}</span>
                                 </td>
                               </tr>
@@ -1268,7 +1268,7 @@ router.post('/new', (req, res, next) => {
                 <tbody>
                   <tr>
                     <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                      <h1 style="font-family: Tahoma;font-weight: 500;">
+                      <h1 style="font-family: Tahoma, sans-serif;font-weight: 500;">
                         <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
                       </h1>
                     </td>
@@ -1279,13 +1279,13 @@ router.post('/new', (req, res, next) => {
                         <tr>
                           <td width="540" valign="top">
                             <table cellpadding="0" cellspacing="0" width="100%">
-                              <tr style="text-align: center;font-family: Tahoma;">
+                              <tr style="text-align: center;font-family: Tahoma, sans-serif;">
                                 <td>
                                   <h1 style="font-weight: 500;">Confirmation of registration</h1>
                                 </td>
                               </tr>
                               <tr>
-                                <td style="padding: 25px 0 0 0;font-family: Tahoma;max-width: 600px;">
+                                <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
                                   To complete the registration, click the link - <a style="color: #fff;" href="${frontUrl}/registration/confirmationuser/${confirmLink}">${frontUrl}/registration/confirmationuser/${confirmLink}</a>. <br /> The link is valid for 30 days.
                                 </td>
                               </tr>
