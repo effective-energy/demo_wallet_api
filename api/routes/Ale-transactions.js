@@ -9,6 +9,87 @@ const Alewallet = require('../models/Ale-wallets');
 const Aleusers = require('../models/Ale-users');
 const Aletoken = require('../models/Ale-token');
 
+router.post('/list', (req, res, next) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aletoken.find({user_token: user_token})
+  .exec()
+  .then(result_found_token => {
+    if(result_found_token.length === 0) {
+      return res.status(404).json({
+        message: 'Token not found'
+      })
+    }
+    Aleusers.find({_id: decode_token.userId})
+    .exec()
+    .then(result_found_user => {
+      if(result_found_user.length === 0) {
+        return res.status(404).json({
+          message: 'User not found'
+        })
+      }
+      if(req.body.addresses === undefined || req.body.addresses.length === 0) {
+        return res.status(200).json({
+          message: 'Addresess list is empty'
+        })
+      }
+      Aletransactions
+      .find({
+        $or: [
+          {
+            'walletAddress': req.body.addresses
+          },
+          {
+            'walletDestination': req.body.addresses
+          }
+        ]
+      })
+      .exec()
+      .then(result => {
+        let transactionsList = [];
+
+        for(let i=0;i<req.body.addresses.length;i++) {
+          if(result.filter(item => { return item.walletAddress === req.body.addresses[i] || item.walletDestination === req.body.addresses[i]}).length === 0) {
+            transactionsList.push({
+              address: req.body.addresses[i],
+              transactions: []
+            })
+          } else {
+            transactionsList.push({
+              address: req.body.addresses[i],
+              transactions: result.filter(wallet => {
+                return req.body.addresses[i].includes(wallet.walletAddress) || req.body.addresses[i].includes(wallet.walletDestination)
+              })
+            })
+          }
+        }
+
+        return res.status(200).json(transactionsList)
+      })
+      .catch(err => {
+        return res.status(500).json({
+          error: err
+        })
+      })
+    })
+    .catch(err => {
+      return res.status(500).json({
+        message: 'Server error when searching for a user by token'
+      })
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({
+      message: 'Server error when searching token'
+    })
+  })
+});
+
 router.get('/:walletAddress', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
