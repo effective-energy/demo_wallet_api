@@ -51,6 +51,7 @@ router.post('/list', (req, res, next) => {
       })
       .exec()
       .then(result => {
+
         let transactionsList = [];
 
         for(let i=0;i<req.body.addresses.length;i++) {
@@ -69,7 +70,11 @@ router.post('/list', (req, res, next) => {
           }
         }
 
-        return res.status(200).json(transactionsList)
+        let sortTransactions = transactionsList.sort(function(a,b) {
+          return new Date(b.timestamp) - new Date(a.timestamp);
+        });
+
+        return res.status(200).json(sortTransactions)
       })
       .catch(err => {
         return res.status(500).json({
