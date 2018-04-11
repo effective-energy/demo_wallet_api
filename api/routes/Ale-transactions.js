@@ -74,6 +74,20 @@ router.post('/list', (req, res, next) => {
           return new Date(b.timestamp) - new Date(a.timestamp);
         });
 
+        for(let i=0;i<sortTransactions.length;i++) {
+          for(let j=0;j<sortTransactions[i].transactions.length;j++) {
+            if(sortTransactions[i].transactions[j].balanceInfoDest !== null) {
+              if(sortTransactions[i].transactions[j].walletDestination === sortTransactions[i].address) {
+                sortTransactions[i].transactions[j].balanceInfo.before = sortTransactions[i].transactions[j].balanceInfoDest.before
+                sortTransactions[i].transactions[j].balanceInfo.after = sortTransactions[i].transactions[j].balanceInfoDest.after
+              }
+            }
+            sortTransactions[i].transactions[j].balanceInfoDest = null
+          }
+        }
+
+
+
         return res.status(200).json(sortTransactions)
       })
       .catch(err => {
