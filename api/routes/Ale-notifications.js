@@ -68,7 +68,7 @@ router.get('/', (req, res, next) => {
   })
 });
 
-router.delete('/:notifId', (req, res, next) => {
+router.delete('/list', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
   if (decode_token.length === 0) {
@@ -76,63 +76,41 @@ router.delete('/:notifId', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aletoken.find({user_token: user_token})
+  if(req.body.list === undefined || req.body.list.length === 0) {
+    return res.status(200).json({
+      message: 'Notifications list is empty!'
+    })
+  }
+  Alenotifications.find({_id: {$in: req.body.list}})
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
-      return res.status(404).json({
-        message: 'Token not found'
+  .then(result => {
+    if(result.length === 0) {
+      return res.status(200).json({
+        message: 'Notifications list is empty!'
       })
     }
-    Aleusers.find({_id: decode_token.userId})
-    .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      Alenotifications.find({_id: req.params.notifId})
+    if(result.length === result.length) {
+      Alenotifications.remove({_id: {$in: req.body.list}})
       .exec()
-      .then(result_found_notifications => {
-        if(result_found_notifications.length === 0) {
-          return res.status(200).json({
-            message: 'Notifications not found'
-          })
-        }
-        if(result_found_notifications[0].user_id !== decode_token.userId) {
-          return res.status(200).json({
-            message: 'This notification does not belong to the user.'
-          })
-        }
-        Alenotifications.remove({ _id: req.params.notifId })
-        .exec()
-        .then(result_delete_notit => {
-          return res.status(200).json({
-            message: 'Notifications successfully deleted'
-          })
-        })
-        .catch(err => {
-          return res.status(200).json({
-            message: 'Server error when deleted notifications'
-          })
+      .then(result_delete => {
+        return res.status(200).json({
+          message: 'Notifications successfully deleted'
         })
       })
       .catch(err => {
         return res.status(500).json({
-          message: 'Server error when searching notifications'
+          message: 'Server error when deleted notifications'
         })
       })
-    })
-    .catch(err => {
-      return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+    } else {
+      return res.status(200).json({
+        message: 'One or more notifications are not owned by the user!'
       })
-    })
+    }
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching notifications'
     })
   })
 });

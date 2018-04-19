@@ -319,17 +319,4 @@ router.post('/send', (req, res, body) => {
   })
 });
 
-router.get('/', (req, res, next) => {
-  Aletransactions.find()
-  .exec()
-  .then(result => {
-    res.status(200).json(result)
-  })
-  .catch(err => {
-    res.status(500).json({
-      message: 'Server error when searching an transactions'
-    })
-  });
-});
-
 module.exports = router;
