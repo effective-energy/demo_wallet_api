@@ -1033,7 +1033,8 @@ router.post('/confirm-reg', (req, res, next) => {
       competence: [],
       change_token: "",
       email_token: "",
-      disabled_wallets: []
+      disabled_wallets: [],
+      last_update_password: new Date()
     });
     newAleUser.save()
     .then(result_save_user => {
@@ -1085,6 +1086,11 @@ router.post('/change-password', (req, res, next) => {
         message: "User not found by email"
       })
     }
+    if(result_found[0].isTwoAuth === false || result_found[0].twoAuthRecovery.length === 0) {
+      return res.status(500).json({
+        message: 'Two-factor authentication is not enabled!'
+      })
+    }
     let newPassword = randomstring.generate(16);
     bcrypt.hash(newPassword, 10, (err, hash) => {
       if (err) {
@@ -1092,10 +1098,10 @@ router.post('/change-password', (req, res, next) => {
           message: 'Server error when encrypted user password'
         });
       }
-      Aleusers.update(
-        {_id: result_found[0]._id},
-        { password: hash }
-      )
+      Aleusers.update({_id: result_found[0]._id}, { '$set': {
+        password: hash,
+        last_update_password: new Date()
+      }})
       .exec()
       .then(result_reset_password => {
 
@@ -1435,7 +1441,8 @@ router.get('/get-user-data', (req, res, next) => {
           email: result_found[0].email,
           isTwoAuth: result_found[0].isTwoAuth,
           walletsList: resultWallets,
-          haveTransactions: false
+          haveTransactions: false,
+          last_update_password: result_found[0].last_update_password
         })
       } else {
 
