@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer');
 const speakeasy = require('speakeasy');
 const randomstring = require('randomstring');
 
-const frontUrl = 'http://localhost:8080/#';
+const frontUrl = '';
 
 var transporter = nodemailer.createTransport({
   host: '',
@@ -899,73 +899,6 @@ router.post('/change-email', (req, res, next) => {
   })
 });
 
-router.post('/changePassword', (req, res, next) => {
-  let user_token = req.headers.authorization;
-  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
-  if (decode_token.length === 0) {
-    return res.status(404).json({
-      message: 'User token not sent'
-    })
-  }
-  Aleusers.find({_id: decode_token.userId})
-  .exec()
-  .then(result_found => {
-    if (result_found.length === 0) {
-      return res.status(404).json({
-        message: 'User not found!'
-      })
-    }
-
-    if (
-        speakeasy.time.verify({
-          secret: result_found[0].twoAuthRecovery,
-          encoding: 'base32',
-          token: req.body.token
-        })
-      ) {
-      if (bcrypt.compareSync(req.body.old, result_found[0].password)) {
-        bcrypt.hash(req.body.new, 10, (err, hash) => {
-          if (err) {
-            return res.status(500).json({
-              message: 'Server error when encrypted user password'
-            });
-          }
-
-          Aleusers.update(
-            { _id: result_found[0]._id },
-            { password: hash }
-          )
-          .exec()
-          .then(result_change_password => {
-            return res.status(200).json({
-              message: 'Password update'
-            })  
-          })
-          .catch(err => {
-            res.status(500).json({
-              message: 'Server error when update user password'
-            });
-          });
-        })
-      }
-      else {
-        return res.status(401).json({
-          message: 'Passwords is incorrect'
-        })
-      }
-    } else {
-      res.status(500).json({
-        message: 'Failed to verify'
-      })
-    }
-  })
-  .catch(err => {
-    res.status(500).json({
-      message: 'Server error when searching for a user by token'
-    })
-  });
-});
-
 router.post('/change-basic-info', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
@@ -1034,7 +967,7 @@ router.post('/confirm-reg', (req, res, next) => {
       change_token: "",
       email_token: "",
       disabled_wallets: [],
-      last_update_password: new Date()
+      lastUpdatedPassword: new Date().getTime()
     });
     newAleUser.save()
     .then(result_save_user => {
@@ -1078,12 +1011,13 @@ router.post('/change-password', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aleusers.find({_id: decode_token.userId}).find()
+
+  Aleusers.find({_id: decode_token.userId})
   .exec()
   .then(result_found => {
     if (result_found.length === 0) {
       return res.status(404).json({
-        message: "User not found by email"
+        message: 'User not found!'
       })
     }
     if(result_found[0].isTwoAuth === false || result_found[0].twoAuthRecovery.length === 0) {
@@ -1091,96 +1025,55 @@ router.post('/change-password', (req, res, next) => {
         message: 'Two-factor authentication is not enabled!'
       })
     }
-    let newPassword = randomstring.generate(16);
-    bcrypt.hash(newPassword, 10, (err, hash) => {
-      if (err) {
-        return res.status(500).json({
-          message: 'Server error when encrypted user password'
-        });
-      }
-      Aleusers.update({_id: result_found[0]._id}, { '$set': {
-        password: hash,
-        last_update_password: new Date()
-      }})
-      .exec()
-      .then(result_reset_password => {
 
-        const mailOptions = {
-          from: 'demo.alehub@gmail.com',
-          to: result_found[0].email,
-          subject: 'Restore password',
-          html: `
-            <center style="width: 100%;">
-              <table align="center" cellpadding="0" cellspacing="0" width="600">
-                <tbody>
-                  <tr>
-                    <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                      <h1 style="font-family: Tahoma, sans-serif;font-weight: 500;">
-                        <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
-                      </h1>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
-                      <table cellpadding="0" cellspacing="0" width="100%">
-                        <tr>
-                          <td width="540" valign="top">
-                            <table cellpadding="0" cellspacing="0" width="100%">
-                              <tr style="text-align: center;font-family: Tahoma, sans-serif;">
-                                <td>
-                                  <h1 style="font-weight: 500;">Confirmation of registration</h1>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
-                                  New password - <span style="color: #fff;">${newPassword}</span>
-                                </td>
-                              </tr>
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
-                      <table cellpadding="0" cellspacing="0" width="100%">
-                        <tr>
-                          <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </center>
-          `
-        };
-
-        transporter.sendMail(mailOptions, function(error, info) {
-          if (error) {
+    if (
+        speakeasy.time.verify({
+          secret: result_found[0].twoAuthRecovery,
+          encoding: 'base32',
+          token: req.body.token
+        })
+      ) {
+      if (bcrypt.compareSync(req.body.old, result_found[0].password)) {
+        bcrypt.hash(req.body.new, 10, (err, hash) => {
+          if (err) {
             return res.status(500).json({
-              message: 'Server error when send email'
-            })
+              message: 'Server error when encrypted user password'
+            });
           }
-          return res.status(200).json({
-            message: 'New password send to E-mail'
-          });
-        });
 
+          Aleusers.update(
+            { _id: result_found[0]._id },
+            { password: hash }
+          )
+          .exec()
+          .then(result_change_password => {
+            return res.status(200).json({
+              message: 'Password update'
+            })  
+          })
+          .catch(err => {
+            res.status(500).json({
+              message: 'Server error when update user password'
+            });
+          });
+        })
+      }
+      else {
+        return res.status(401).json({
+          message: 'Passwords is incorrect'
+        })
+      }
+    } else {
+      res.status(500).json({
+        message: 'Failed to verify'
       })
-      .catch(err => {
-        res.status(500).json({
-          message: 'Server error when change user password'
-        });
-      });
-    })
+    }
   })
   .catch(err => {
-    return res.status(500).json({
+    res.status(500).json({
       message: 'Server error when searching for a user by token'
     })
-  })
+  });
 });
 
 router.post('/restore-2fa', (req, res, next) => {
@@ -1442,7 +1335,7 @@ router.get('/get-user-data', (req, res, next) => {
           isTwoAuth: result_found[0].isTwoAuth,
           walletsList: resultWallets,
           haveTransactions: false,
-          last_update_password: result_found[0].last_update_password
+          lastUpdatedPassword: result_found[0].lastUpdatedPassword
         })
       } else {
 
@@ -1455,7 +1348,8 @@ router.get('/get-user-data', (req, res, next) => {
           email: result_found[0].email,
           isTwoAuth: result_found[0].isTwoAuth,
           walletsList: result_found[0].walletsList,
-          haveTransactions: totalCountTransactions
+          haveTransactions: totalCountTransactions,
+          lastUpdatedPassword: result_found[0].lastUpdatedPassword
         })
       }
     })

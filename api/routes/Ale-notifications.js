@@ -7,19 +7,6 @@ const Alenotifications = require('../models/Ale-notifications');
 const Aleusers = require('../models/Ale-users');
 const Aletoken = require('../models/Ale-token');
 
-router.get('/all', (req, res, next) => {
-  Alenotifications.find()
-  .exec()
-  .then(result_found => {
-    return res.status(200).json(result_found)
-  })
-  .catch(err => {
-    return res.status(500).json({
-      message: 'Server error on receiving notifications'
-    })
-  })
-});
-
 router.get('/', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);

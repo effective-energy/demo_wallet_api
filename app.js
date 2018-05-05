@@ -26,11 +26,8 @@ var limiter = new RateLimit({
 app.use(limiter);
 
 mongoose.Promise = global.Promise;
-mongoose.connect(
-	'mongodb://admin:'+
-	process.env.MONGO_ATLAS_PW
-	+'@the-protocol-shard-00-00-hsfjj.mongodb.net:27017,the-protocol-shard-00-01-hsfjj.mongodb.net:27017,the-protocol-shard-00-02-hsfjj.mongodb.net:27017/test?ssl=true&replicaSet=the-protocol-shard-0&authSource=admin', {
-	useMongoClient: true
+mongoose.connect('mongodb://localhost/ale-demo', {
+  useMongoClient: true
 });
 
 app.use(morgan('dev'));

@@ -47,8 +47,8 @@ const aleUsersSchema = mongoose.Schema({
     type: Array,
     required: false
   },
-  last_update_password: {
-    type: Date,
+  lastUpdatedPassword: {
+    type: Number,
     required: false
   },
   __v: {
