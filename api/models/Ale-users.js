@@ -51,6 +51,10 @@ const aleUsersSchema = mongoose.Schema({
     type: Number,
     required: false
   },
+  avatar: {
+    type: String,
+    required: false
+  },
   __v: {
     type: Number,
     select: false

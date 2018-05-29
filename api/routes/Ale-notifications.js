@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 
 const Alenotifications = require('../models/Ale-notifications');
 const Aleusers = require('../models/Ale-users');
-const Aletoken = require('../models/Ale-token');
 
 router.get('/', (req, res, next) => {
   let user_token = req.headers.authorization;
@@ -15,42 +14,28 @@ router.get('/', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aletoken.find({user_token: user_token})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
+  .then(result_found_user => {
+    if(result_found_user.length === 0) {
       return res.status(404).json({
-        message: 'Token not found'
+        message: 'User not found'
       })
     }
-    Aleusers.find({_id: decode_token.userId})
+    Alenotifications.find({user_id: decode_token.userId})
     .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      Alenotifications.find({user_id: decode_token.userId})
-      .exec()
-      .then(result_found => {
-        return res.status(200).json(result_found)
-      })
-      .catch(err => {
-        return res.status(500).json({
-          message: 'Server error on receiving notifications'
-        })
-      })
+    .then(result_found => {
+      return res.status(200).json(result_found)
     })
     .catch(err => {
       return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+        message: 'Server error on receiving notifications'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching for a user by token'
     })
   })
 });

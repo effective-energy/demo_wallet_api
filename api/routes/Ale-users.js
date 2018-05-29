@@ -6,23 +6,86 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const speakeasy = require('speakeasy');
 const randomstring = require('randomstring');
+const sha256 = require('sha256');
+const multer = require('multer');
 
-const frontUrl = '';
+const frontUrl = process.env.frontUrl;
 
-var transporter = nodemailer.createTransport({
-  host: '',
-  port: '',
-  secure: '',
+let transporter = nodemailer.createTransport({
+  host: process.env.mailHost,
+  port: process.env.mailPort,
+  secure: true,
   auth: {
-    user: '',
-    pass: ''
+    user: process.env.mailLogin,
+    pass: process.env.mailPassword
   }
 });
 
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, './assets/')
+  },
+  filename: function(req, file, cb) {
+    cb(null, sha256(new Date().toISOString())+file.originalname);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+    cb(null, true)
+  } else cb(null, false);
+};
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10024 * 10024 * 10
+  },
+  fileFilter: fileFilter
+});
+
 const Aleusers = require('../models/Ale-users');
-const Aletoken = require('../models/Ale-token');
 const Alewallet = require('../models/Ale-wallets');
 const Alenotifications = require('../models/Ale-notifications');
+
+router.post('/set_avatar', upload.single('avatar'), (req, res, next) => {
+  let user_token = req.headers.authorization;
+  let decode_token = jwt.verify(user_token, process.env.JWT_KEY);
+  if (decode_token.length === 0) {
+    return res.status(404).json({
+      message: 'User token not sent'
+    })
+  }
+  Aleusers.find({_id: decode_token.userId})
+  .exec()
+  .then(result_found_user => {
+    if(result_found_user.length === 0) {
+      return res.status(404).json({
+        message: 'User not found'
+      })
+    }
+    Aleusers.update({_id: req.params.id}, {
+      '$set': {
+        avatar: req.file.path
+      }
+    })
+    .exec()
+    .then(result_update_avatar => {
+      return res.status(200).json({
+        message: 'Avatar successuly uploaded!',
+        avatar_path: req.file.path
+      })
+    })
+    .catch(err => {
+      return res.status
+    })
+  })
+  .catch(err => {
+    return res.status(500).json({
+      message: 'Server error when searching for a user by token'
+    })
+  })
+});
 
 router.post('/change-name', (req, res, next) => {
   let user_token = req.headers.authorization;
@@ -32,41 +95,27 @@ router.post('/change-name', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aletoken.find({user_token: user_token})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
+  .then(result_found_user => {
+    if(result_found_user.length === 0) {
       return res.status(404).json({
-        message: 'Token not found'
+        message: 'User not found'
       })
     }
-    Aleusers.find({_id: decode_token.userId})
+    return Aleusers.update(
+      { _id: result_found_user[0]._id },
+      { name: req.body.newName }
+    )
     .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      return Aleusers.update(
-        { _id: result_found_user[0]._id },
-        { name: req.body.newName }
-      )
-      .exec()
-      .then(result_change_name => {
-        return res.status(200).json({
-          message: 'User name success update'
-        })
-      })
-      .catch(err => {
-        return res.status(500).json({
-          message: 'Server error when update user data'
-        })
+    .then(result_change_name => {
+      return res.status(200).json({
+        message: 'User name success update'
       })
     })
     .catch(err => {
       return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+        message: 'Server error when update user data'
       })
     })
   })
@@ -147,7 +196,7 @@ router.post('/recovery', (req, res, next) => {
     )
     .then(result_update_token => {
       const mailOptions = {
-        from: 'demo.alehub@gmail.com',
+        from: 'ale-demo@alehub.io',
         to: req.body.email,
         subject: 'Recovery password',
         html: `
@@ -269,44 +318,22 @@ router.delete('/logout', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aletoken.find({user_token: user_token})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
-  .then(result_found => {
-    if (result_found.length === 0) {
+  .then(result_found_user => {
+    if (result_found_user.length === 0) {
       return res.status(404).json({
-        message: 'Token not found'
+        message: 'User not found'
+      })
+    } else {
+      return res.status(200).json({
+        message: 'Token success deleted'
       })
     }
-    Aleusers.find({_id: decode_token.userId})
-    .exec()
-    .then(result_found_user => {
-      if (result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      Aletoken.remove({user_token: user_token})
-      .exec()
-      .then(result_delete_token => {
-        return res.status(200).json({
-          message: 'Token success deleted'
-        })
-      })
-      .catch(err => {
-        return res.status(500).json({
-          message: 'Server error when deleted user-token'
-        })
-      })
-    })
-    .catch(err => {
-      return res.status(500).json({
-        message: 'Server error when searching for a user by token'
-      })
-    })
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching for a user by token'
     })
   })
 });
@@ -318,48 +345,21 @@ router.post('/check-login', (req, res, next) => {
     })
   }
   let decode_user_token = jwt.verify(req.body.token, process.env.JWT_KEY);
-  Aletoken.find({user_token: req.body.token})
+  Aleusers.find({_id: decode_user_token.userId})
   .exec()
-  .then(result_found => {
-    if (result_found.length === 0) {
+  .then(result_found_user => {
+    if (result_found_user.length === 0) {
       return res.status(404).json({
-        message: 'Token not found'
+        message: 'User not found'
       })
     }
-    Aleusers.find({_id: decode_user_token.userId})
-    .exec()
-    .then(result_found_user => {
-      if (result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      return res.status(200).json(result_found_user);
-    })
-    .catch(err => {
-      return res.status(500).json({
-        message: 'Server error when searching user by id'
-      })
-    })
+    return res.status(200).json(result_found_user);
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching user by id'
     })
   })
-});
-
-router.get('/', (req, res, next) => {
-  Aleusers.find()
-  .exec()
-  .then(result_found => {
-    res.status(200).json(result_found)
-  })
-  .catch(err => {
-    res.status(500).json({
-      message: 'Server error when searching users'
-    })
-  });
 });
 
 router.post('/setRating', (req, res, next) => {
@@ -422,59 +422,45 @@ router.post('/enable-two-auth', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aletoken.find({user_token: user_token})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
+  .then(result_found_user => {
+    if(result_found_user.length === 0) {
       return res.status(404).json({
-        message: 'Token not found'
+        message: 'User not found'
       })
     }
-    Aleusers.find({_id: decode_token.userId})
-    .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      if (
-        speakeasy.time.verify({
-          secret: req.body.secret,
-          encoding: 'base32',
-          token: req.body.token
-        })
-      ) {
-        Aleusers.update({ _id: decode_token.userId }, { '$set': {
-          twoAuthRecovery: req.body.secret,
-          isTwoAuth: true
-        }})
-        .exec()
-        .then(result_update => {
-          res.status(200).json({
-            message: 'User model success updated'
-          })
-        })
-        .catch(err => {
-          res.status(500).json({
-            message: 'Server error when changed user data'
-          })
-        });
-      } else {
-        res.status(500).json({
-          message: 'Failed to verify'
-        })
-      }
-    })
-    .catch(err => {
-      return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+    if (
+      speakeasy.time.verify({
+        secret: req.body.secret,
+        encoding: 'base32',
+        token: req.body.token
       })
-    })
+    ) {
+      Aleusers.update({ _id: decode_token.userId }, { '$set': {
+        twoAuthRecovery: req.body.secret,
+        isTwoAuth: true
+      }})
+      .exec()
+      .then(result_update => {
+        res.status(200).json({
+          message: 'User model success updated'
+        })
+      })
+      .catch(err => {
+        res.status(500).json({
+          message: 'Server error when changed user data'
+        })
+      });
+    } else {
+      res.status(500).json({
+        message: 'Failed to verify'
+      })
+    }
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching for a user by token'
     })
   })
 });
@@ -487,63 +473,49 @@ router.post('/disable-two-auth', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aletoken.find({user_token: user_token})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
+  .then(result_found_user => {
+    if(result_found_user.length === 0) {
       return res.status(404).json({
-        message: 'Token not found'
+        message: 'User not found'
       })
     }
-    Aleusers.find({_id: decode_token.userId})
-    .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      if(!result_found_user[0].isTwoAuth) {
-        return res.status(500).json({
-          message: 'Two auth already disabled'
-        })
-      } else {
-        if (
-          speakeasy.time.verify({
-            secret: req.body.secret,
-            encoding: 'base32',
-            token: req.body.token
-          })
-          ) {
-          Aleusers.update({ _id: decode_token.userId }, { isTwoAuth: false })
-        .exec()
-        .then(result_enable_twoAuthRecovery => {
-          return res.status(200).json({
-            message: 'Two auth success disable'
-          })
-        })
-        .catch(err => {
-          return res.status(500).json({
-            message: 'Server error when changed user data'
-          })
-        })
-      }
-      else {
-        res.status(500).json({
-          message: 'Failed to verify'
-        })
-      }
-    }
-    })
-    .catch(err => {
+    if(!result_found_user[0].isTwoAuth) {
       return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+        message: 'Two auth already disabled'
       })
-    })
+    } else {
+      if (
+        speakeasy.time.verify({
+          secret: req.body.secret,
+          encoding: 'base32',
+          token: req.body.token
+        })
+        ) {
+        Aleusers.update({ _id: decode_token.userId }, { isTwoAuth: false })
+      .exec()
+      .then(result_enable_twoAuthRecovery => {
+        return res.status(200).json({
+          message: 'Two auth success disable'
+        })
+      })
+      .catch(err => {
+        return res.status(500).json({
+          message: 'Server error when changed user data'
+        })
+      })
+    }
+    else {
+      res.status(500).json({
+        message: 'Failed to verify'
+      })
+    }
+  }
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching for a user by token'
     })
   })
 });
@@ -556,123 +528,86 @@ router.post('/confirm-change-email', (req, res, next) => {
       message: 'User token or confirm token not sent'
     })
   }
-  Aletoken.find({user_token: req.headers.authorization})
+  Aleusers.find({email: decode_token.oldEmail})
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
-      return res.status(404).json({
-        message: 'Token not found'
+  .then(result => {
+    if(result.length === 0) {
+      return res.status(200).json({
+        message: 'User not found'
       })
     }
-    Aleusers.find({email: decode_token.oldEmail})
-    .exec()
-    .then(result => {
-      if(result.length === 0) {
-        return res.status(200).json({
-          message: 'User not found'
-        })
-      }
-      if(result[0].email_token !== decode_token.token) {
-        return res.status(200).json({
-          message: 'Invalid token'
-        })
-      }
-      if(decode_token.isChange) {
-        Aleusers.update({ _id: decode_token.userId }, { '$set': {
-          email_token: "",
-          email: decode_token.email
-        }})
-        .exec()
-        .then(result_change_email => {
-          Aletoken.remove({user_token: req.headers.authorization})
-          .exec()
-          .then(result_delete_token => {
-
-            const userToken = jwt.sign({
-              email: decode_token.email,
-              userId: result[0]._id
-            }, process.env.JWT_KEY, {
-              expiresIn: "30d"
-            });
-
-            const newUserToken = new Aletoken({
-              _id: new mongoose.Types.ObjectId(),
-              user_token: userToken
-            });
-            newUserToken.save()
-            .then(result_save_token => {
-
-              let newNotifications = new Alenotifications({
-                _id: new mongoose.Types.ObjectId(),
-                user_id: user_token.userId,
-                isDeleted: false,
-                isSubtitle: false,
-                date: new Date().getTime(),
-                title: `You **change** email from <span class="deleted">${decode_token.oldEmail}</span> to **${decode_token.email}**`,
-                subTitle: "",
-                changes: []
-              });
-
-              newNotifications
-              .save()
-              .then(result_create_notifications => {
-                return res.status(200).json({
-                  message: 'Success change email',
-                  user_token: userToken,
-                  user_email: decode_token.email
-                });
-              })
-              .catch(err => {
-                return res.status(500).json({
-                  message: 'Server error when creating notifications'
-                })
-              })
-            })
-            .catch(err => {
-              return res.status(500).json({
-                message: 'Server error when creating an user-token'
-              })
-            })
-
-          })
-          .catch(err => {
-            return res.status(500).json({
-              message: 'Server error when deleted user-token'
-            })
-          })
-        })
-        .catch(err => {
-          return res.status(500).json({
-            message: 'Server error when deleted old user token'
-          })
-        })
-      } else {
-        Aleusers.update(
-          { _id: decode_token.userId },
-          { email_token: "" }
-        )
-        .exec()
-        .then(result_cancel_change_email => {
-          return res.status(200).json({
-            message: 'Cancellation of mail changes was successful'
-          })
-        })
-        .catch(err => {
-          return res.status(500).json({
-          message: 'Server error when change user data'
-          })
-        })
-      }
-    })
-    .catch(err => {
-      return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+    if(result[0].email_token !== decode_token.token) {
+      return res.status(200).json({
+        message: 'Invalid token'
       })
-    })
+    }
+    if(decode_token.isChange) {
+      Aleusers.update({ _id: decode_token.userId }, { '$set': {
+        email_token: "",
+        email: decode_token.email
+      }})
+      .exec()
+      .then(result_change_email => {
+
+        const userToken = jwt.sign({
+          email: decode_token.email,
+          userId: result[0]._id
+        }, process.env.JWT_KEY, {
+          expiresIn: "30d"
+        });
+
+        let newNotifications = new Alenotifications({
+          _id: new mongoose.Types.ObjectId(),
+          user_id: user_token.userId,
+          isDeleted: false,
+          isSubtitle: false,
+          date: new Date().getTime(),
+          title: `You **change** email from <span class="deleted">${decode_token.oldEmail}</span> to **${decode_token.email}**`,
+          subTitle: "",
+          changes: []
+        });
+
+        newNotifications
+        .save()
+        .then(result_create_notifications => {
+          return res.status(200).json({
+            message: 'Success change email',
+            user_token: userToken,
+            user_email: decode_token.email
+          });
+        })
+        .catch(err => {
+          return res.status(500).json({
+            message: 'Server error when creating notifications'
+          })
+        })
+      })
+      .catch(err => {
+        return res.status(500).json({
+          message: 'Server error when deleted old user token'
+        })
+      })
+    } else {
+      Aleusers.update(
+        { _id: decode_token.userId },
+        { email_token: "" }
+      )
+      .exec()
+      .then(result_cancel_change_email => {
+        return res.status(200).json({
+          message: 'Cancellation of mail changes was successful'
+        })
+      })
+      .catch(err => {
+        return res.status(500).json({
+        message: 'Server error when change user data'
+        })
+      })
+    }
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching for a user by token'
     })
   })
 });
@@ -685,74 +620,122 @@ router.post('/change-email', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aletoken.find({user_token: user_token})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
+  .then(result_found_user => {
+    if(result_found_user.length === 0) {
       return res.status(404).json({
-        message: 'Token not found'
+        message: 'User not found'
       })
     }
-    Aleusers.find({_id: decode_token.userId})
+    if(result_found_user[0].isTwoAuth !== true) {
+      return res.status(200).json({
+        message: 'Enable Two auth'
+      })
+    }
+    Aleusers.find({email: req.body.email})
     .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
+    .then(result_check_exist_email => {
+      if(result_check_exist_email.length !== 0) {
+        return res.status(500).json({
+          message: 'User already exist'
         })
       }
-      if(result_found_user[0].isTwoAuth !== true) {
-        return res.status(200).json({
-          message: 'Enable Two auth'
-        })
-      }
-      Aleusers.find({email: req.body.email})
-      .exec()
-      .then(result_check_exist_email => {
-        if(result_check_exist_email.length !== 0) {
-          return res.status(500).json({
-            message: 'User already exist'
-          })
-        }
-        if (
-        speakeasy.time.verify({
-          secret: result_found_user[0].twoAuthRecovery,
-          encoding: 'base32',
-          token: req.body.token
-        })
-      ) {
+      if (
+      speakeasy.time.verify({
+        secret: result_found_user[0].twoAuthRecovery,
+        encoding: 'base32',
+        token: req.body.token
+      })
+    ) {
 
-        let emailToken = randomstring.generate(16);
+      let emailToken = randomstring.generate(16);
 
-        let confirmToken = jwt.sign({
-          email: req.body.email,
-          userId: decode_token.userId,
-          salt: randomstring.generate(16),
-          token: emailToken,
-          isChange: true,
-          oldEmail: result_found_user[0].email
-        }, process.env.JWT_KEY, {
-          expiresIn: "30d"
-        });
+      let confirmToken = jwt.sign({
+        email: req.body.email,
+        userId: decode_token.userId,
+        salt: randomstring.generate(16),
+        token: emailToken,
+        isChange: true,
+        oldEmail: result_found_user[0].email
+      }, process.env.JWT_KEY, {
+        expiresIn: "30d"
+      });
 
-        let cancelToken = jwt.sign({
-          email: req.body.email,
-          userId: decode_token.userId,
-          salt: randomstring.generate(16),
-          token: emailToken,
-          isChange: false,
-          oldEmail: result_found_user[0].email
-        }, process.env.JWT_KEY, {
-          expiresIn: "30d"
-        });
-      Aleusers.update(
-          { _id: result_found_user[0]._id },
-          { email_token: emailToken }
-        )
-        .then(result_update_email_token => {
+      let cancelToken = jwt.sign({
+        email: req.body.email,
+        userId: decode_token.userId,
+        salt: randomstring.generate(16),
+        token: emailToken,
+        isChange: false,
+        oldEmail: result_found_user[0].email
+      }, process.env.JWT_KEY, {
+        expiresIn: "30d"
+      });
+    Aleusers.update(
+        { _id: result_found_user[0]._id },
+        { email_token: emailToken }
+      )
+      .then(result_update_email_token => {
+        transporter.sendMail({
+          from: 'ale-demo@alehub.io',
+          to: req.body.email,
+          subject: 'Confirm mail change',
+          html: `
+            <center style="width: 100%;">
+              <table align="center" cellpadding="0" cellspacing="0" width="600">
+                <tbody>
+                  <tr>
+                    <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
+                      <h1 style="font-family: Tahoma, sans-serif;font-weight: 500;">
+                        <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
+                      </h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td width="540" valign="top">
+                            <table cellpadding="0" cellspacing="0" width="100%">
+                              <tr style="text-align: center;font-family: Tahoma, sans-serif;">
+                                <td>
+                                  <h1 style="font-weight: 500;">Confirmation of registration</h1>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
+                                  To change email, follow the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${confirmToken}">${frontUrl}/confirmation-change-email/${confirmToken}</a>. <br /> The link is valid for 30 days.
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </center>
+          `
+        }, function(error, info) {
+          if (error) {
+            return res.status(500).json({
+              message: 'Server error when send email'
+            })
+          }
           transporter.sendMail({
-            from: 'demo.alehub@gmail.com',
-            to: req.body.email,
+            from: 'ale-demo@alehub.io',
+            to: result_found_user[0].email,
             subject: 'Confirm mail change',
             html: `
               <center style="width: 100%;">
@@ -778,7 +761,7 @@ router.post('/change-email', (req, res, next) => {
                                 </tr>
                                 <tr>
                                   <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
-                                    To change email, follow the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${confirmToken}">${frontUrl}/confirmation-change-email/${confirmToken}</a>. <br /> The link is valid for 30 days.
+                                    Someone requested a change of mail for your account. If this is not done by you, go for the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${cancelToken}">${frontUrl}/confirmation-change-email/${cancelToken}</a>. <br /> The link is valid for 30 days.
                                   </td>
                                 </tr>
                               </table>
@@ -806,95 +789,33 @@ router.post('/change-email', (req, res, next) => {
                 message: 'Server error when send email'
               })
             }
-            transporter.sendMail({
-              from: 'demo.alehub@gmail.com',
-              to: result_found_user[0].email,
-              subject: 'Confirm mail change',
-              html: `
-                <center style="width: 100%;">
-                  <table align="center" cellpadding="0" cellspacing="0" width="600">
-                    <tbody>
-                      <tr>
-                        <td align="center" bgcolor="#ffd24f" style="padding: 10px 0 10px 0;">
-                          <h1 style="font-family: Tahoma, sans-serif;font-weight: 500;">
-                            <a href="https://alehub.io" target="_blank" style="color: #2a2d30;">ALEHUB.IO</a>
-                          </h1>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td bgcolor="#2a2d30" style="padding: 40px 30px 40px 30px;color: #fff;">
-                          <table cellpadding="0" cellspacing="0" width="100%">
-                            <tr>
-                              <td width="540" valign="top">
-                                <table cellpadding="0" cellspacing="0" width="100%">
-                                  <tr style="text-align: center;font-family: Tahoma, sans-serif;">
-                                    <td>
-                                      <h1 style="font-weight: 500;">Confirmation of registration</h1>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
-                                      Someone requested a change of mail for your account. If this is not done by you, go for the link - <a style="color: #fff;" href="${frontUrl}/confirmation-change-email/${cancelToken}">${frontUrl}/confirmation-change-email/${cancelToken}</a>. <br /> The link is valid for 30 days.
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td bgcolor="#232323" style="padding: 30px 30px 30px 30px;">
-                          <table cellpadding="0" cellspacing="0" width="100%">
-                            <tr>
-                              <td style="color:#fff;font-family:Tahoma;text-align: center;">© Alehub.io 2018</td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </center>
-              `
-            }, function(error, info) {
-              if (error) {
-                return res.status(500).json({
-                  message: 'Server error when send email'
-                })
-              }
-              return res.status(200).json({
-                message: 'Mails success sent'
-              })
-            });
+            return res.status(200).json({
+              message: 'Mails success sent'
+            })
           });
-        })
-        .catch(err => {
-          return res.status(500).json({
-            message: 'Server error when change user data'
-          })
-        })
-
-      } else {
-        res.status(500).json({
-          message: 'Failed to verify'
-        })
-      }
+        });
       })
       .catch(err => {
         return res.status(500).json({
-          message: 'Server error when searching user by email'
+          message: 'Server error when change user data'
         })
       })
+
+    } else {
+      res.status(500).json({
+        message: 'Failed to verify'
+      })
+    }
     })
     .catch(err => {
       return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+        message: 'Server error when searching user by email'
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching for a user by token'
     })
   })
 });
@@ -967,33 +888,23 @@ router.post('/confirm-reg', (req, res, next) => {
       change_token: "",
       email_token: "",
       disabled_wallets: [],
-      lastUpdatedPassword: new Date().getTime()
+      lastUpdatedPassword: new Date().getTime(),
+      avatar: ""
     });
     newAleUser.save()
     .then(result_save_user => {
-      const newAleToken = new Aletoken({
-        _id: new mongoose.Types.ObjectId(),
-        user_token: jwt.sign({
-          email: result_save_user.email,
-          userId: result_save_user._id
-        }, process.env.JWT_KEY, {
-          expiresIn: "30d"
-        })
+      let new_user_token = jwt.sign({
+        email: result_save_user.email,
+        userId: result_save_user._id
+      }, process.env.JWT_KEY, {
+        expiresIn: "30d"
       });
 
-      newAleToken.save()
-      .then(result_save_token => {
-        return res.status(200).json({
-          message: 'User created!',
-          user_token: newAleToken.user_token,
-          user_id: result_save_user._id
-        });
-      })
-      .catch(err => {
-        return res.status(503).json({
-          message: 'Server error when created user-token'
-        })
-      })
+      return res.status(200).json({
+        message: 'User created!',
+        user_token: new_user_token,
+        user_id: result_save_user._id
+      });
     })
     .catch(err => {
       return res.status(502).json({
@@ -1158,7 +1069,7 @@ router.post('/new', (req, res, next) => {
         });
 
         const mailOptions = {
-          from: 'demo.alehub@gmail.com',
+          from: 'ale-demo@alehub.io',
           to: req.body.email,
           subject: 'Confirmation register',
           html: `
@@ -1185,7 +1096,7 @@ router.post('/new', (req, res, next) => {
                               </tr>
                               <tr>
                                 <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
-                                  To complete the registration, click the link - <a style="color: #fff;" href="${frontUrl}/registration/confirmationuser/${confirmLink}">${frontUrl}/registration/confirmationuser/${confirmLink}</a>. <br /> The link is valid for 30 days.
+                                  To complete the registration, click the link - <a style="color: #fff;" href="${frontUrl}/registration/confirmationuser/${confirmLink}">${frontUrl}/registration/confirmationuser/${confirmLink}</a>. <br /><br /> <span style="color: #fff;">The link is valid for 30 days.</span>
                                 </td>
                               </tr>
                             </table>
@@ -1252,23 +1163,12 @@ router.post('/login/2fa', (req, res, next) => {
             expiresIn: "30d"
           });
 
-          const newUserToken = new Aletoken({
-            _id: new mongoose.Types.ObjectId(),
-            user_token: token
+          return res.status(200).json({
+            message: 'Auth success',
+            user_token: token,
+            twoAuthRecovery_status: result_found[0].isTwoAuth
           });
-          newUserToken.save()
-          .then(result_save_token => {
-            return res.status(200).json({
-              message: 'Auth success',
-              user_token: token,
-              twoAuthRecovery_status: result_found[0].isTwoAuth
-            });
-          })
-          .catch(err => {
-            return res.status(500).json({
-              message: 'Server error when creating an user-token'
-            })
-          })
+
         } else {
           return res.status(401).json({
             message: 'Auth failed'
@@ -1374,60 +1274,46 @@ router.get('/user-wallets', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aletoken.find({user_token: user_token})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
-  .then(result_found => {
-    if(result_found.length === 0) {
+  .then(result_found_user => {
+    if(result_found_user.length === 0) {
       return res.status(404).json({
-        message: 'Token not found'
+        message: 'User not found'
       })
     }
-    Aleusers.find({_id: decode_token.userId})
+    Alewallet.find()
     .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      Alewallet.find()
-      .exec()
-      .then(result_found => {
-        let foundedWallet = result_found.filter(wallet => result_found_user[0].walletsList.includes(wallet.address));
+    .then(result_found => {
+      let foundedWallet = result_found.filter(wallet => result_found_user[0].walletsList.includes(wallet.address));
 
-        let filterWallets = result_found_user[0].disabled_wallets.reduce(function(a,b) {
-          if (a.indexOf(b) < 0 ) a.push(b);
-          return a;
-        },[]);
+      let filterWallets = result_found_user[0].disabled_wallets.reduce(function(a,b) {
+        if (a.indexOf(b) < 0 ) a.push(b);
+        return a;
+      },[]);
 
-        for(let i=0;i<foundedWallet.length;i++) {
-          for(let j=0;j<filterWallets.length;j++) {
-            if(foundedWallet[i].address === filterWallets[j]) {
-              foundedWallet[i] = '';
-            }
+      for(let i=0;i<foundedWallet.length;i++) {
+        for(let j=0;j<filterWallets.length;j++) {
+          if(foundedWallet[i].address === filterWallets[j]) {
+            foundedWallet[i] = '';
           }
         }
+      }
 
-        let resultWallets = foundedWallet.filter(item => {
-          return item.length !== 0
-        })
-      return res.status(200).json(resultWallets);
+      let resultWallets = foundedWallet.filter(item => {
+        return item.length !== 0
       })
-      .catch(err => {
-        res.status(500).json({
-          message: 'Server error when searching wallet an user'
-        })
-      });
+    return res.status(200).json(resultWallets);
     })
     .catch(err => {
-      return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+      res.status(500).json({
+        message: 'Server error when searching wallet an user'
       })
-    })
+    });
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching for a user by token'
     })
   })
 });
@@ -1463,24 +1349,12 @@ router.post('/login', (req, res, next) => {
           expiresIn: "30d"
         });
 
-        const newUserToken = new Aletoken({
-          _id: new mongoose.Types.ObjectId(),
-          user_token: token
+        return res.status(200).json({
+          message: 'Auth success',
+          user_token: token,
+          twoAuthRecovery_status: result_found[0].isTwoAuth
         });
-        newUserToken
-        .save()
-        .then(result_save_token => {
-          return res.status(200).json({
-            message: 'Auth success',
-            user_token: token,
-            twoAuthRecovery_status: result_found[0].isTwoAuth
-          });
-        })
-        .catch(err => {
-          return res.status(500).json({
-            message: 'Server error when creating an user-token'
-          })
-        })
+
       } else {
         return res.status(401).json({
           message: 'Auth failed'

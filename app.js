@@ -11,6 +11,7 @@ const aleUsersRoutes = require('./api/routes/Ale-users');
 const aleOffersRoutes = require('./api/routes/Ale-offers');
 const aleResumesRoutes = require('./api/routes/Ale-resumes');
 const aleNotificationsRoutes = require('./api/routes/Ale-notifications');
+const aleMessagesRoutes = require('./api/routes/Ale-messages');
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
@@ -26,9 +27,7 @@ var limiter = new RateLimit({
 app.use(limiter);
 
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost/ale-demo', {
-  useMongoClient: true
-});
+mongoose.connect(process.env.mongoConnectUrl);
 
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({
@@ -49,6 +48,7 @@ app.use('/users', aleUsersRoutes);
 app.use('/offers', aleOffersRoutes);
 app.use('/resumes', aleResumesRoutes);
 app.use('/notifications', aleNotificationsRoutes);
+app.use('/messages', aleMessagesRoutes);
 
 app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 

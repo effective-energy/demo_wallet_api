@@ -7,7 +7,6 @@ const Aletransactions = require('../models/Ale-transactions');
 const Alenotifications = require('../models/Ale-notifications');
 const Alewallet = require('../models/Ale-wallets');
 const Aleusers = require('../models/Ale-users');
-const Aletoken = require('../models/Ale-token');
 
 router.post('/list', (req, res, next) => {
   let user_token = req.headers.authorization;
@@ -17,94 +16,80 @@ router.post('/list', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aletoken.find({user_token: user_token})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
+  .then(result_found_user => {
+    if(result_found_user.length === 0) {
       return res.status(404).json({
-        message: 'Token not found'
+        message: 'User not found'
       })
     }
-    Aleusers.find({_id: decode_token.userId})
+    if(req.body.addresses === undefined || req.body.addresses.length === 0) {
+      return res.status(200).json({
+        message: 'Addresess list is empty'
+      })
+    }
+    Aletransactions
+    .find({
+      $or: [
+        {
+          'walletAddress': req.body.addresses
+        },
+        {
+          'walletDestination': req.body.addresses
+        }
+      ]
+    })
     .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      if(req.body.addresses === undefined || req.body.addresses.length === 0) {
-        return res.status(200).json({
-          message: 'Addresess list is empty'
-        })
-      }
-      Aletransactions
-      .find({
-        $or: [
-          {
-            'walletAddress': req.body.addresses
-          },
-          {
-            'walletDestination': req.body.addresses
-          }
-        ]
-      })
-      .exec()
-      .then(result => {
+    .then(result => {
 
-        let transactionsList = [];
+      let transactionsList = [];
 
-        for(let i=0;i<req.body.addresses.length;i++) {
-          if(result.filter(item => { return item.walletAddress === req.body.addresses[i] || item.walletDestination === req.body.addresses[i]}).length === 0) {
-            transactionsList.push({
-              address: req.body.addresses[i],
-              transactions: []
+      for(let i=0;i<req.body.addresses.length;i++) {
+        if(result.filter(item => { return item.walletAddress === req.body.addresses[i] || item.walletDestination === req.body.addresses[i]}).length === 0) {
+          transactionsList.push({
+            address: req.body.addresses[i],
+            transactions: []
+          })
+        } else {
+          transactionsList.push({
+            address: req.body.addresses[i],
+            transactions: result.filter(wallet => {
+              return req.body.addresses[i].includes(wallet.walletAddress) || req.body.addresses[i].includes(wallet.walletDestination)
             })
-          } else {
-            transactionsList.push({
-              address: req.body.addresses[i],
-              transactions: result.filter(wallet => {
-                return req.body.addresses[i].includes(wallet.walletAddress) || req.body.addresses[i].includes(wallet.walletDestination)
-              })
-            })
-          }
+          })
         }
+      }
 
-        let sortTransactions = transactionsList.sort(function(a,b) {
-          return new Date(b.timestamp) - new Date(a.timestamp);
-        });
+      let sortTransactions = transactionsList.sort(function(a,b) {
+        return new Date(b.timestamp) - new Date(a.timestamp);
+      });
 
-        for(let i=0;i<sortTransactions.length;i++) {
-          for(let j=0;j<sortTransactions[i].transactions.length;j++) {
-            if(sortTransactions[i].transactions[j].balanceInfoDest !== null) {
-              if(sortTransactions[i].transactions[j].walletDestination === sortTransactions[i].address) {
-                sortTransactions[i].transactions[j].balanceInfo.before = sortTransactions[i].transactions[j].balanceInfoDest.before
-                sortTransactions[i].transactions[j].balanceInfo.after = sortTransactions[i].transactions[j].balanceInfoDest.after
-              }
+      for(let i=0;i<sortTransactions.length;i++) {
+        for(let j=0;j<sortTransactions[i].transactions.length;j++) {
+          if(sortTransactions[i].transactions[j].balanceInfoDest !== null) {
+            if(sortTransactions[i].transactions[j].walletDestination === sortTransactions[i].address) {
+              sortTransactions[i].transactions[j].balanceInfo.before = sortTransactions[i].transactions[j].balanceInfoDest.before
+              sortTransactions[i].transactions[j].balanceInfo.after = sortTransactions[i].transactions[j].balanceInfoDest.after
             }
-            sortTransactions[i].transactions[j].balanceInfoDest = null
           }
+          sortTransactions[i].transactions[j].balanceInfoDest = null
         }
+      }
 
 
 
-        return res.status(200).json(sortTransactions)
-      })
-      .catch(err => {
-        return res.status(500).json({
-          error: err
-        })
-      })
+      return res.status(200).json(sortTransactions)
     })
     .catch(err => {
       return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+        error: err
       })
     })
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching for a user by token'
     })
   })
 });
@@ -117,56 +102,42 @@ router.get('/:walletAddress', (req, res, next) => {
       message: 'User token not sent'
     })
   }
-  Aletoken.find({user_token: user_token})
+  Aleusers.find({_id: decode_token.userId})
   .exec()
-  .then(result_found_token => {
-    if(result_found_token.length === 0) {
+  .then(result_found_user => {
+    if(result_found_user.length === 0) {
       return res.status(404).json({
-        message: 'Token not found'
+        message: 'User not found'
       })
     }
-    Aleusers.find({_id: decode_token.userId})
+    Aletransactions.find()
     .exec()
-    .then(result_found_user => {
-      if(result_found_user.length === 0) {
-        return res.status(404).json({
-          message: 'User not found'
-        })
-      }
-      Aletransactions.find()
-      .exec()
-      .then(result => {
-        var foundTransactions = result.filter(item => {
-          return item.walletAddress === req.params.walletAddress || item.walletDestination === req.params.walletAddress
-        });
-        for(let i=0;i<foundTransactions.length;i++) {
-          if(req.params.walletAddress === foundTransactions[i].walletDestination) {
-            foundTransactions[i].balanceInfo.before = foundTransactions[i].balanceInfoDest.before;
-            foundTransactions[i].balanceInfo.after = foundTransactions[i].balanceInfoDest.after;
-          }
-          foundTransactions[i].balanceInfoDest = {}
-        }
-
-        let sortTransactions = foundTransactions.sort(function(a,b) {
-          return new Date(b.timestamp) - new Date(a.timestamp);
-        });
-        return res.status(200).json(sortTransactions)
-      })
-      .catch(err => {
-        res.status(500).json({
-          message: 'Server error when searching an transactions'
-        })
+    .then(result => {
+      var foundTransactions = result.filter(item => {
+        return item.walletAddress === req.params.walletAddress || item.walletDestination === req.params.walletAddress
       });
+      for(let i=0;i<foundTransactions.length;i++) {
+        if(req.params.walletAddress === foundTransactions[i].walletDestination) {
+          foundTransactions[i].balanceInfo.before = foundTransactions[i].balanceInfoDest.before;
+          foundTransactions[i].balanceInfo.after = foundTransactions[i].balanceInfoDest.after;
+        }
+        foundTransactions[i].balanceInfoDest = {}
+      }
+
+      let sortTransactions = foundTransactions.sort(function(a,b) {
+        return new Date(b.timestamp) - new Date(a.timestamp);
+      });
+      return res.status(200).json(sortTransactions)
     })
     .catch(err => {
-      return res.status(500).json({
-        message: 'Server error when searching for a user by token'
+      res.status(500).json({
+        message: 'Server error when searching an transactions'
       })
-    })
+    });
   })
   .catch(err => {
     return res.status(500).json({
-      message: 'Server error when searching token'
+      message: 'Server error when searching for a user by token'
     })
   })
 });

@@ -1,9 +1,13 @@
 const http = require('http');
 const app = require('./app');
 
-const port = process.env.PORT || 4000;
 const server = http.createServer(app);
+const io = require('socket.io')(server);
 
-server.listen(port, function() {
-	console.log('Server starting 4000 port')
+io.on('connection', function(socket) {
+  socket.on('newMessaegFromChat', function(msg) {
+    io.emit('newMessaegFromChat', msg);
+  });
 });
+
+server.listen(process.env.PORT, process.env.BIND_IP);
