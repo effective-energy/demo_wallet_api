@@ -6,19 +6,6 @@ const jwt = require('jsonwebtoken');
 const Alemessages = require('../models/Ale-messages');
 const Aleusers = require('../models/Ale-users');
 
-router.get('/', (req, res, next) => {
-  Alemessages.find()
-  .exec()
-  .then(result => {
-    return res.status(200).json(result);
-  })
-  .catch(err => {
-    return res.status(500).json({
-      message: 'Server error when searching messages'
-    })
-  })
-});
-
 router.post('/send', (req, res, next) => {
   let user_token = req.headers.authorization;
   let decode_token = jwt.verify(user_token, process.env.JWT_KEY);

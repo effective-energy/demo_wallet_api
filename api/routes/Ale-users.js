@@ -1096,7 +1096,12 @@ router.post('/new', (req, res, next) => {
                               </tr>
                               <tr>
                                 <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
-                                  To complete the registration, click the link - <a style="color: #fff;" href="${frontUrl}/registration/confirmationuser/${confirmLink}">${frontUrl}/registration/confirmationuser/${confirmLink}</a>. <br /><br /> <span style="color: #fff;">The link is valid for 30 days.</span>
+                                  To complete the registration, click the link - <a style="color: #fff;" href="${frontUrl}/registration/confirmationuser/${confirmLink}">Click to confirm</a>. <br /><br /> <span style="color: #fff;">The link is valid for 30 days.</span>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
+                                  Open on IOS app - <a style="color: #fff;" href="alewallet://confirm?token${confirmLink}">Click to confirm</a>. <br /><br /> <span style="color: #fff;">The link is valid for 30 days.</span>
                                 </td>
                               </tr>
                             </table>
