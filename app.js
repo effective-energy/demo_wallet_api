@@ -49,7 +49,7 @@ app.use('/offers', aleOffersRoutes);
 app.use('/resumes', aleResumesRoutes);
 app.use('/notifications', aleNotificationsRoutes);
 app.use('/messages', aleMessagesRoutes);
-
+app.use('/assets', express.static('assets'));
 app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors());

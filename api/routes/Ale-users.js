@@ -64,7 +64,7 @@ router.post('/set_avatar', upload.single('avatar'), (req, res, next) => {
         message: 'User not found'
       })
     }
-    Aleusers.update({_id: req.params.id}, {
+    Aleusers.update({_id: decode_token.userId}, {
       '$set': {
         avatar: req.file.path
       }
@@ -1100,8 +1100,12 @@ router.post('/new', (req, res, next) => {
                                 </td>
                               </tr>
                               <tr>
-                                <td style="padding: 25px 0 0 0;font-family: Tahoma, sans-serif;max-width: 600px;">
-                                  Open on IOS app - <a style="color: #fff;" href="alewallet://confirm?token${confirmLink}">Click to confirm</a>. <br /><br /> <span style="color: #fff;">The link is valid for 30 days.</span>
+                                <td style="text-align: center;">
+                                  <p>
+                                    <a style="color: #fff;" href="http://alewallet://confirm?token=${confirmLink}">
+                                      <img src="https://alehub.io/appstore_logo.png" width="200" />
+                                    </a>
+                                  </p>
                                 </td>
                               </tr>
                             </table>
@@ -1240,7 +1244,8 @@ router.get('/get-user-data', (req, res, next) => {
           isTwoAuth: result_found[0].isTwoAuth,
           walletsList: resultWallets,
           haveTransactions: false,
-          lastUpdatedPassword: result_found[0].lastUpdatedPassword
+          lastUpdatedPassword: result_found[0].lastUpdatedPassword,
+          avatar: result_found[0].avatar
         })
       } else {
 
@@ -1254,7 +1259,8 @@ router.get('/get-user-data', (req, res, next) => {
           isTwoAuth: result_found[0].isTwoAuth,
           walletsList: result_found[0].walletsList,
           haveTransactions: totalCountTransactions,
-          lastUpdatedPassword: result_found[0].lastUpdatedPassword
+          lastUpdatedPassword: result_found[0].lastUpdatedPassword,
+          avatar: result_found[0].avatar
         })
       }
     })
